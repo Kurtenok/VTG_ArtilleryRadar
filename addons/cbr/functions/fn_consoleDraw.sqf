@@ -50,7 +50,7 @@ for "_ring" from 1 to CBR_RINGS do {
     _map drawIcon [
         "#(argb,8,8,3)color(0,0,0,0)", CBR_COL_DIM,
         [_bearing, _d] call _fnc_at, 0, 0, 0,
-        format ["%1", round (_d / 1000)], 0, 22 * CBR_PH, "RobotoCondensed"
+        format ["%1", round (_d / 1000)], 0, CBR_RING_TEXT, "RobotoCondensed"
     ];
 };
 
@@ -71,7 +71,7 @@ _map drawLine [_pos, [_sw, _far] call _fnc_at, CBR_COL_MAIN];
 // сама станція
 _map drawIcon [
     "\A3\ui_f\data\map\markers\nato\o_installation.paa", CBR_COL_MAIN,
-    _pos, 26 * CBR_PW, 26 * CBR_PH, 0, "", 0, 0, "RobotoCondensed"
+    _pos, CBR_ICON_SIZE, CBR_ICON_SIZE, 0, "", 0, 0, "RobotoCondensed"
 ];
 
 // --- засічки ---
@@ -120,8 +120,8 @@ private _now = time;
 
     _map drawIcon [
         "\A3\ui_f\data\map\markers\military\triangle_CA.paa", _col,
-        _p, 22 * CBR_PW, 22 * CBR_PH, 0,
-        _label, 0, 20 * CBR_PH, "RobotoCondensed"
+        _p, CBR_ICON_SIZE, CBR_ICON_SIZE, 0,
+        _label, 0, CBR_TEXT_SIZE, "RobotoCondensed"
     ];
 
     // свіжа засічка блимає другим кільцем: око само знайде її серед старих
