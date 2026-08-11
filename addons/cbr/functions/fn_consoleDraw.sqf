@@ -28,46 +28,65 @@ private _fnc_at = {
     [(_pos select 0) + _dist * sin _az, (_pos select 1) + _dist * cos _az]
 };
 
-// --- дуги дальності ---
 private _from = _bearing - _half;
 private _to = _bearing + _half;
 
-// проміжні дуги з постійним кроком, зовнішня — рівно на дальності
-private _marks = [];
-private _d = CBR_RING_STEP;
-while { _d < _far } do {
-    _marks pushBack [_d, CBR_COL_FAINT];
-    _d = _d + CBR_RING_STEP;
-};
-_marks pushBack [_far, CBR_COL_DIM];
+/*
+    Сітка сектора — дуги дальності, їх підписи й межі — від кадру не
+    залежить: вона змінюється лише коли оператор довернув сектор або
+    станція переїхала. Тому рахується один раз і лежить готовою.
 
-{
-    _x params ["_d", "_col"];
+    Раніше це були три сотні синусів щокадру: вісім дуг по два десятки
+    точок, і все наново на кожному малюванні.
+*/
+private _key = [round (_pos select 0), round (_pos select 1), round _bearing, _sector, _far];
+private _grid = uiNamespace getVariable ["cbr_grid", []];
 
-    private _prev = [_from, _d] call _fnc_at;
-    private _az = _from + CBR_ARC_STEP;
-    while { _az < _to } do {
-        private _p = [_az, _d] call _fnc_at;
-        _map drawLine [_prev, _p, _col];
-        _prev = _p;
-        _az = _az + CBR_ARC_STEP;
+if ((_grid param [0, []]) isNotEqualTo _key) then {
+    private _lines = [];
+    private _texts = [];
+
+    private _fnc_arc = {
+        params ["_d", "_col"];
+
+        private _prev = [_from, _d] call _fnc_at;
+        private _az = _from + CBR_ARC_STEP;
+        while { _az < _to } do {
+            private _p = [_az, _d] call _fnc_at;
+            _lines pushBack [_prev, _p, _col];
+            _prev = _p;
+            _az = _az + CBR_ARC_STEP;
+        };
+        _lines pushBack [_prev, [_to, _d] call _fnc_at, _col];
+
+        // підпис по осі сектора; півкілометри пишемо з десятою
+        private _km = _d / 1000;
+        _texts pushBack [
+            "#(argb,8,8,3)color(0,0,0,0)", CBR_COL_DIM,
+            [_bearing, _d] call _fnc_at, 0, 0, 0,
+            if ((_km - floor _km) < 0.05) then { str round _km } else { _km toFixed 1 },
+            0, CBR_RING_TEXT, "RobotoCondensed"
+        ];
     };
-    _map drawLine [_prev, [_to, _d] call _fnc_at, _col];
 
-    // підпис по осі сектора; півкілометри пишемо з десятою
-    private _km = _d / 1000;
-    private _txt = if ((_km - floor _km) < 0.05) then { str round _km } else { _km toFixed 1 };
+    // проміжні дуги з постійним кроком, зовнішня — рівно на дальності
+    private _d = CBR_RING_STEP;
+    while { _d < _far } do {
+        [_d, CBR_COL_FAINT] call _fnc_arc;
+        _d = _d + CBR_RING_STEP;
+    };
+    [_far, CBR_COL_DIM] call _fnc_arc;
 
-    _map drawIcon [
-        "#(argb,8,8,3)color(0,0,0,0)", CBR_COL_DIM,
-        [_bearing, _d] call _fnc_at, 0, 0, 0,
-        _txt, 0, CBR_RING_TEXT, "RobotoCondensed"
-    ];
-} forEach _marks;
+    // межі сектора
+    _lines pushBack [_pos, [_from, _far] call _fnc_at, CBR_COL_DIM];
+    _lines pushBack [_pos, [_to, _far] call _fnc_at, CBR_COL_DIM];
 
-// --- межі сектора ---
-_map drawLine [_pos, [_from, _far] call _fnc_at, CBR_COL_DIM];
-_map drawLine [_pos, [_to, _far] call _fnc_at, CBR_COL_DIM];
+    _grid = [_key, _lines, _texts];
+    uiNamespace setVariable ["cbr_grid", _grid];
+};
+
+{ _map drawLine _x } forEach (_grid select 1);
+{ _map drawIcon _x } forEach (_grid select 2);
 
 /*
     Розгортка. Справжня станція проходить сектор кілька разів на
@@ -87,6 +106,7 @@ _map drawIcon [
 
 // --- засічки ---
 private _sel = uiNamespace getVariable ["cbr_sel", 0];
+private _labels = uiNamespace getVariable ["cbr_labels", []];
 private _now = time;
 
 {
@@ -116,15 +136,9 @@ private _now = time;
         _col
     ];
 
-    // на індикаторі — усе, що потрібно для рішення, без заглядання в
-    // журнал: чим били, скільки разів і коли
-    private _what = if (_cal > 0) then {
-        format [localize "STR_cbr_label", _cal, _speed]
-    } else {
-        format [localize "STR_cbr_label_nocal", _speed]
-    };
-
-    private _label = format ["%1  %2  x%3  %4", _id, _what, _rounds, [_when] call cbr_fnc_hhmm];
+    // підпис зібрано в оновленні журналу: він міняється подіями, а не
+    // щокадру, і складати його по два десятки разів на кадр нема сенсу
+    private _label = _labels param [_forEachIndex, ""];
 
     /*
         Імпульс появи. Фаза береться від віку засічки, а не від

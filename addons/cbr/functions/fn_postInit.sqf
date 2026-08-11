@@ -15,6 +15,9 @@
 
 if (isNil "cbr_radars") then { cbr_radars = [] };
 
+// балістичність класу боєприпасу: питається в конфіга раз і лишається
+if (isNil "cbr_ballistic") then { cbr_ballistic = createHashMap };
+
 // штатні радари зі списку класів; наступним кадром — модулі Едему
 // мають відпрацювати першими
 [{ [] call cbr_fnc_stock }] call CBA_fnc_execNextFrame;
@@ -24,20 +27,33 @@ if (isNil "cbr_radars") then { cbr_radars = [] };
 addMissionEventHandler ["ProjectileCreated", {
     params ["_proj"];
 
+    /*
+        Найдешевша перевірка — першою: без жодного радара в місії мод не
+        робить нічого взагалі, і кожна куля коштує рівно одного
+        порівняння порожнього масиву.
+    */
+    if (cbr_radars isEqualTo []) exitWith {};
+
     // дешевий відсів чужих снарядів; головна перевірка — нижче, по
     // стрільцеві, бо копію пострілу симулює кожна машина
     if (!local _proj) exitWith {};
 
     /*
-        Куля відсіюється двома перевірками типу й далі не йде. Кероване
-        не рахується: контрбатарейний радар шукає балістику, а ПТУР і
-        ЗУР летять своїм двигуном і своєю логікою.
-    */
-    private _ballistic = _proj isKindOf "ShellCore"
-        || {_proj isKindOf "RocketCore" && {!(_proj isKindOf "MissileCore")}};
-    if (!_ballistic) exitWith {};
+        Балістика це чи ні — властивість КЛАСУ, а не снаряда, тож
+        питаємо конфіг раз на клас і далі беремо з кеша: isKindOf ходить
+        по дереву спадкування, а куль за бій летять тисячі.
 
-    if (cbr_radars isEqualTo []) exitWith {};
+        Кероване не рахується: радар шукає балістику, а ПТУР і ЗУР
+        летять своїм двигуном і своєю логікою.
+    */
+    private _type = typeOf _proj;
+    private _ballistic = cbr_ballistic get _type;
+    if (isNil "_ballistic") then {
+        _ballistic = _proj isKindOf "ShellCore"
+            || {_proj isKindOf "RocketCore" && {!(_proj isKindOf "MissileCore")}};
+        cbr_ballistic set [_type, _ballistic];
+    };
+    if (!_ballistic) exitWith {};
 
     private _vel = velocity _proj;
     private _speed = vectorMagnitude _vel;
@@ -83,6 +99,6 @@ addMissionEventHandler ["ProjectileCreated", {
     // каже, КОГО накривають, чого з самої позиції не видно
     private _az = (_vel select 0) atan2 (_vel select 1);
 
-    [_pos, [typeOf _proj] call cbr_fnc_caliber, round _speed, (round _az + 360) mod 360, side _src]
+    [_pos, [_type] call cbr_fnc_caliber, round _speed, (round _az + 360) mod 360, side _src]
         remoteExec ["cbr_fnc_detect", 2];
 }];
