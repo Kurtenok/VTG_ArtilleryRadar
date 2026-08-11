@@ -18,8 +18,9 @@
 
 params ["_pos", "_kind", "_cal", "_speed", "_side"];
 
-// [сторона, дальність до ближчого радара, його похибка]
-private _hits = [];
+// засічки лягають у журнал КОЖНОЇ станції, що побачила постріл: карту
+// вони не чіпають, поки оператор не передасть їх сам
+private _seen = [];
 
 {
     private _radar = _x;
@@ -37,34 +38,54 @@ private _hits = [];
 
     // сектор відлічується від носа машини: розвернули радар — змінився
     // й сектор. 360 означає круговий огляд
+    // напрямок сектора веде ОПЕРАТОР із консолі; поки її не відкривали,
+    // сектор дивиться туди ж, куди й машина
     private _sector = _radar getVariable ["cbr_sector", CBR_SECTOR];
     if (_sector < 360) then {
         private _to = _pos vectorDiff _rPos;
         private _az = (_to select 0) atan2 (_to select 1);
-        if (abs (((_az - getDir _radar + 540) mod 360) - 180) > _sector / 2) then { continue };
+        private _bearing = _radar getVariable ["cbr_bearing", getDir _radar];
+        if (abs (((_az - _bearing + 540) mod 360) - 180) > _sector / 2) then { continue };
     };
 
-    private _idx = _hits findIf { (_x select 0) isEqualTo _rSide };
-    if (_idx > -1) then {
-        if (_dist < ((_hits select _idx) select 1)) then {
-            _hits set [_idx, [_rSide, _dist, _radar getVariable ["cbr_error", CBR_ERROR]]];
-        };
-    } else {
-        _hits pushBack [_rSide, _dist, _radar getVariable ["cbr_error", CBR_ERROR]];
-    };
+    _seen pushBack [_radar, _dist];
 } forEach cbr_radars;
 
 {
-    _x params ["_rSide", "_dist", "_error"];
+    _x params ["_radar", "_dist"];
 
     /*
         Похибка зворотної екстраполяції. Рівномірно по КРУГУ радіусом
         error*дальність: sqrt від рівномірного числа не дає точкам
         збиватися до центра, тобто промах чесний по всій площі.
     */
-    private _r = _dist * _error * sqrt (random 1);
+    private _r = _dist * (_radar getVariable ["cbr_error", CBR_ERROR]) * sqrt (random 1);
     private _a = random 360;
     private _fix = [(_pos select 0) + _r * sin _a, (_pos select 1) + _r * cos _a, 0];
 
-    [_fix, _cal, _speed] remoteExec ["cbr_fnc_report", _rSide];
-} forEach _hits;
+    /*
+        Журнал живе на самій станції й публічний: його бачить будь-хто з
+        екіпажу, він переживає пересадку оператора, і мережею йде один
+        запис на постріл, а не розсилка на всю сторону.
+    */
+    private _log = _radar getVariable ["cbr_acq", []];
+    private _old = time - CBR_ACQ_LIFE;
+    _log = _log select { (_x select 4) > _old };
+
+    // постріли з тієї самої позиції — одна вогнева, а не десяток записів
+    private _idx = _log findIf { (_x select 1) distance2D _fix < CBR_MERGE };
+    if (_idx > -1) then {
+        private _acq = _log select _idx;
+        _acq set [4, time];
+        _acq set [5, (_acq select 5) + 1];
+    } else {
+        private _n = (_radar getVariable ["cbr_acqId", 0]) + 1;
+        _radar setVariable ["cbr_acqId", _n];
+
+        // [номер, точка, калібр, швидкість, час, пострілів]
+        _log pushBack [_n, _fix, _cal, _speed, time, 1];
+        if (count _log > CBR_ACQ_MAX) then { _log deleteAt 0 };
+    };
+
+    _radar setVariable ["cbr_acq", _log, true];
+} forEach _seen;

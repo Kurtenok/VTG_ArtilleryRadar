@@ -43,8 +43,15 @@ if (isServer) then {
     if (!(_veh getVariable ["cbr_initDone", false])) then {
         _veh setVariable ["cbr_initDone", true, true];
 
+        // початковий напрямок сектора — куди дивиться машина; далі його
+        // веде оператор із пульта
+        _veh setVariable ["cbr_bearing", getDir _veh, true];
+
         if (isNil "cbr_radars") then { cbr_radars = [] };
         cbr_radars pushBack _veh;
         publicVariable "cbr_radars";
     };
 };
+
+// меню клієнтське — будується в кожного
+if (hasInterface) then { [_veh] call cbr_fnc_createAceMenu };

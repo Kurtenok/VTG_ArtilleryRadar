@@ -1,0 +1,110 @@
+#include "defines.h"
+
+/*
+    Function: cbr_fnc_console
+    Консоль оператора станції.
+
+    Діалог, а не шар поверх екрана: оператор саме СИДИТЬ за пультом, і
+    керування машиною на цей час йому не належить. Так само працює
+    будь-який робочий пост — поки ти на індикаторі, ти не за кермом.
+
+    Основа — картографічний контрол. Сучасні станції (TPQ-53, ARTHUR)
+    так і показують обстановку: сектор і засічки поверх місцевості, бо
+    оператору однаково доводиться називати квадрат. Малюємо поверх
+    нього самі: сектор, дуги дальності, розгортку й самі засічки.
+
+    Контроли будуються тут, а не в конфізі: розкладка рахується від
+    safeZone, і в конфізі її довелося б дублювати числами.
+*/
+
+if (!hasInterface) exitWith { false };
+
+private _veh = vehicle player;
+if (!([_veh] call cbr_fnc_canUse)) exitWith { false };
+
+if (!(createDialog "cbr_console")) exitWith { false };
+
+private _display = findDisplay CBR_IDD;
+if (isNull _display) exitWith { false };
+
+uiNamespace setVariable ["cbr_veh", _veh];
+uiNamespace setVariable ["cbr_sel", 0];
+
+private _x0 = safeZoneX;
+private _y0 = safeZoneY;
+private _w = safeZoneW;
+private _h = safeZoneH;
+
+// права колонка — журнал засічок, решта під індикатор
+private _logW = 720 * CBR_PXU;
+private _barH = 62 * CBR_LU;
+
+private _fnc_text = {
+    params ["_display", "_pos", "_size", "_color", ["_align", "left"], ["_class", "RscStructuredText"]];
+    private _c = _display ctrlCreate [_class, -1];
+    _c ctrlSetPosition _pos;
+    _c ctrlSetFontHeight _size;
+    _c ctrlSetTextColor _color;
+    _c ctrlCommit 0;
+    _c
+};
+
+// --- підкладка ---
+private _bg = _display ctrlCreate ["RscText", -1];
+_bg ctrlSetPosition [_x0, _y0, _w, _h];
+_bg ctrlSetBackgroundColor CBR_COL_BG;
+_bg ctrlCommit 0;
+
+// --- індикатор ---
+private _map = _display ctrlCreate ["cbr_map", -1];
+_map ctrlSetPosition [_x0, _y0 + _barH, _w - _logW, _h - 2 * _barH];
+_map ctrlCommit 0;
+_map ctrlAddEventHandler ["Draw", { _this call cbr_fnc_consoleDraw }];
+
+// станція в центрі індикатора; масштаб далі крутиться колесом
+_map ctrlMapAnimAdd [0, 0.22, getPosATL _veh];
+ctrlMapAnimCommit _map;
+
+uiNamespace setVariable ["cbr_map", _map];
+
+// --- верхній рядок стану ---
+private _status = [_display, [_x0 + 20 * CBR_PXU, _y0 + 12 * CBR_LU, _w - 40 * CBR_PXU, 40 * CBR_LU], 30 * CBR_PH, CBR_COL_MAIN] call _fnc_text;
+uiNamespace setVariable ["cbr_status", _status];
+
+// --- журнал ---
+private _logX = _x0 + _w - _logW + 16 * CBR_PXU;
+private _logW2 = _logW - 32 * CBR_PXU;
+
+private _head = [_display, [_logX, _y0 + _barH + 8 * CBR_LU, _logW2, 30 * CBR_LU], 24 * CBR_PH, CBR_COL_DIM] call _fnc_text;
+_head ctrlSetStructuredText parseText (localize "STR_cbr_ui_head");
+_head ctrlCommit 0;
+
+private _rows = [];
+for "_i" from 0 to (CBR_UI_ROWS - 1) do {
+    private _r = [
+        _display,
+        [_logX, _y0 + _barH + (44 + _i * CBR_UI_ROW_H) * CBR_LU, _logW2, CBR_UI_ROW_H * CBR_LU],
+        26 * CBR_PH, CBR_COL_MAIN
+    ] call _fnc_text;
+    _rows pushBack _r;
+};
+uiNamespace setVariable ["cbr_rows", _rows];
+
+// --- нижня підказка ---
+private _hint = [_display, [_x0 + 20 * CBR_PXU, _y0 + _h - 46 * CBR_LU, _w - 40 * CBR_PXU, 34 * CBR_LU], 24 * CBR_PH, CBR_COL_DIM] call _fnc_text;
+_hint ctrlSetStructuredText parseText (localize "STR_cbr_ui_keys");
+_hint ctrlCommit 0;
+
+_display displayAddEventHandler ["KeyDown", { _this call cbr_fnc_consoleKey }];
+_display displayAddEventHandler ["Unload", {
+    private _h = uiNamespace getVariable ["cbr_pfh", -1];
+    if (_h > -1) then { [_h] call CBA_fnc_removePerFrameHandler };
+    uiNamespace setVariable ["cbr_pfh", -1];
+}];
+
+// журнал і рядок стану оновлюються рідко: цифри там міняються
+// подіями, а не щокадру. Розгортку веде обробник малювання
+uiNamespace setVariable ["cbr_pfh", [{ [] call cbr_fnc_consoleUpdate }, 0.25] call CBA_fnc_addPerFrameHandler];
+[] call cbr_fnc_consoleUpdate;
+
+true

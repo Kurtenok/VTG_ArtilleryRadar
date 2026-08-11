@@ -41,8 +41,10 @@
 */
 #define CBR_ERROR 0.004
 
-#define CBR_MARKER_LIFE 300  // скільки живе позначка на карті, с
+#define CBR_MARKER_LIFE 300  // скільки живе передана позначка на карті, с
 #define CBR_MERGE 250        // ближчі засічки — та сама вогнева позиція, м
+#define CBR_ACQ_LIFE 900     // скільки засічка тримається в журналі станції, с
+#define CBR_ACQ_MAX 24       // глибина журналу: старіші витісняються
 
 // Повільніше — не балістична ціль (випав боєприпас, відділився блок)
 #define CBR_MIN_SPEED 40
@@ -53,3 +55,35 @@
 #define CBR_KIND_ROCKET 2
 
 #define CBR_MARKER_TYPE "mil_triangle"
+
+/*
+    Консоль оператора. Макет 2560x1440 масштабується часткою safeZone —
+    та сама розкладка за будь-якої роздільної здатності.
+*/
+#define CBR_UI_SCALE 1
+#define CBR_LU (safeZoneH / 1440)
+#define CBR_PH (CBR_LU * CBR_UI_SCALE)
+#define CBR_PW (CBR_PH * pixelW / pixelH)
+#define CBR_PXU (safeZoneW / 2560)
+
+#define CBR_IDD 8451
+
+// Люмінофор: усе однією фарбою, як на справжньому індикаторі
+#define CBR_COL_BG [0.02, 0.04, 0.03, 0.94]
+#define CBR_COL_PANEL [0.05, 0.09, 0.06, 0.85]
+#define CBR_COL_MAIN [0.35, 0.95, 0.5, 0.9]
+#define CBR_COL_DIM [0.35, 0.95, 0.5, 0.28]
+#define CBR_COL_FAINT [0.35, 0.95, 0.5, 0.12]
+#define CBR_COL_HOT [1, 0.6, 0.15, 1]      // засічка молодша за CBR_HOT_AGE
+#define CBR_COL_SEL [1, 1, 1, 1]
+#define CBR_COL_SENT [0.45, 0.75, 1, 1]    // вже передана в штаб
+
+#define CBR_HOT_AGE 45     // скільки секунд засічка вважається свіжою
+#define CBR_SWEEP_PERIOD 2 // період проходу розгортки по сектору, с
+#define CBR_RINGS 4        // скільки дуг дальності малювати
+#define CBR_ARC_STEP 5     // крок сегмента дуги, градусів
+#define CBR_SLEW_STEP 5    // на скільки градусів крутить сектор одне натискання
+
+// Розкладка в пікселях макета
+#define CBR_UI_ROWS 12     // рядків у журналі
+#define CBR_UI_ROW_H 34

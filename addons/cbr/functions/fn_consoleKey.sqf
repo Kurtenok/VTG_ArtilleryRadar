@@ -1,0 +1,45 @@
+#include "defines.h"
+
+/*
+    Function: cbr_fnc_consoleKey
+    Керування пультом. Клавіші перехоплюються, щоб гравець не бігав і
+    не крутив башту, поки сидить за індикатором.
+*/
+
+params ["_display", "_key"];
+
+private _veh = uiNamespace getVariable ["cbr_veh", objNull];
+if (isNull _veh) exitWith { false };
+
+private _log = uiNamespace getVariable ["cbr_log", []];
+private _sel = uiNamespace getVariable ["cbr_sel", 0];
+
+switch (_key) do {
+    // A / D і стрілки — доворот сектора
+    case 30; case 203: {
+        [_veh, -CBR_SLEW_STEP] call cbr_fnc_slew;
+    };
+    case 32; case 205: {
+        [_veh, CBR_SLEW_STEP] call cbr_fnc_slew;
+    };
+
+    // W / S і стрілки — вибір засічки
+    case 17; case 200: {
+        uiNamespace setVariable ["cbr_sel", (_sel - 1) max 0];
+    };
+    case 31; case 208: {
+        uiNamespace setVariable ["cbr_sel", (_sel + 1) min (((count _log) - 1) max 0)];
+    };
+
+    // передати засічку в штаб
+    case 28; case 156; case 57: {
+        [_veh, _sel] call cbr_fnc_transmit;
+    };
+
+    default { false };
+};
+
+[] call cbr_fnc_consoleUpdate;
+
+// Esc лишаємо рушію — ним пульт і закривається
+_key != 1
