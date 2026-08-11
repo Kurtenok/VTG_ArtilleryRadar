@@ -19,9 +19,7 @@ private _fnc_arg = {
 };
 
 private _settings = [
-    ["RangeMortar", CBR_RANGE_MORTAR] call _fnc_arg,
-    ["RangeGun", CBR_RANGE_GUN] call _fnc_arg,
-    ["RangeRocket", CBR_RANGE_ROCKET] call _fnc_arg,
+    ["Range", CBR_RANGE] call _fnc_arg,
     ["Sector", CBR_SECTOR] call _fnc_arg,
     ["Error", CBR_ERROR] call _fnc_arg
 ];

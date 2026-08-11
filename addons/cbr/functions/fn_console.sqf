@@ -68,7 +68,7 @@ _map ctrlAddEventHandler ["Draw", { _this call cbr_fnc_consoleDraw }];
     будь-якої роздільної здатності й дальності станції.
 */
 private _mapW = _w - _logW;
-private _want = 2.2 * selectMax (_veh getVariable ["cbr_ranges", [CBR_RANGE_ROCKET]]);
+private _want = 2.2 * (_veh getVariable ["cbr_range", CBR_RANGE]);
 
 _map ctrlMapAnimAdd [0, 1, getPosATL _veh];
 ctrlMapAnimCommit _map;

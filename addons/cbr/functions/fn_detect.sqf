@@ -16,7 +16,7 @@
     ближчий — у нього менша похибка.
 */
 
-params ["_pos", "_kind", "_cal", "_speed", "_fireAz", "_side"];
+params ["_pos", "_cal", "_speed", "_fireAz", "_side"];
 
 // засічки лягають у журнал КОЖНОЇ станції, що побачила постріл: карту
 // вони не чіпають, поки оператор не передасть їх сам
@@ -34,7 +34,7 @@ private _seen = [];
 
     private _rPos = getPosASL _radar;
     private _dist = _rPos distance _pos;
-    if (_dist > ((_radar getVariable ["cbr_ranges", [CBR_RANGE_MORTAR, CBR_RANGE_GUN, CBR_RANGE_ROCKET]]) select _kind)) then { continue };
+    if (_dist > (_radar getVariable ["cbr_range", CBR_RANGE])) then { continue };
 
     // сектор відлічується від носа машини: розвернули радар — змінився
     // й сектор. 360 означає круговий огляд

@@ -11,35 +11,15 @@
             <Russian>Насколько отметка может отстоять от настоящего орудия, долей от расстояния до него: 0.004 — это 80 м на 20 км. Радар считает назад по короткому участку дуги, поэтому угловая ошибка растёт с дальностью.</Russian>
             <Ukrainian>Наскільки позначка може відстояти від справжньої гармати, часткою від відстані до неї: 0.004 — це 80 м на 20 км. Радар рахує назад по короткій ділянці дуги, тому кутова помилка росте з дальністю.</Ukrainian>
         </Key>
-        <Key ID="STR_cbr_arg_gun">
-            <English>Detection range: guns (m)</English>
-            <Russian>Дальность обнаружения: орудия (м)</Russian>
-            <Ukrainian>Дальність виявлення: гармати (м)</Ukrainian>
+        <Key ID="STR_cbr_arg_range">
+            <English>Detection range (m)</English>
+            <Russian>Дальность обнаружения (м)</Russian>
+            <Ukrainian>Дальність виявлення (м)</Ukrainian>
         </Key>
-        <Key ID="STR_cbr_arg_gun_desc">
-            <English>Range at which howitzer and gun fire is located. AN/TPQ-36 does 18 km, AN/TPQ-37 up to 50 km.</English>
-            <Russian>Дальность засечки огня гаубиц и пушек. У AN/TPQ-36 это 18 км, у AN/TPQ-37 — до 50 км.</Russian>
-            <Ukrainian>Дальність засічки вогню гаубиць і гармат. У AN/TPQ-36 це 18 км, у AN/TPQ-37 — до 50 км.</Ukrainian>
-        </Key>
-        <Key ID="STR_cbr_arg_mortar">
-            <English>Detection range: mortars (m)</English>
-            <Russian>Дальность обнаружения: миномёты (м)</Russian>
-            <Ukrainian>Дальність виявлення: міномети (м)</Ukrainian>
-        </Key>
-        <Key ID="STR_cbr_arg_mortar_desc">
-            <English>Range at which mortar fire is located. Mortars are told apart by muzzle velocity, not by how steep the arc is: below 350 m/s counts as a mortar.</English>
-            <Russian>Дальность засечки миномётного огня. Миномёт отличается по дульной скорости, а не по крутизне дуги: ниже 350 м/с считается миномётом.</Russian>
-            <Ukrainian>Дальність засічки мінометного вогню. Міномет відрізняється дульною швидкістю, а не крутизною дуги: нижче 350 м/с вважається мінометом.</Ukrainian>
-        </Key>
-        <Key ID="STR_cbr_arg_rocket">
-            <English>Detection range: rockets (m)</English>
-            <Russian>Дальность обнаружения: реактивные (м)</Russian>
-            <Ukrainian>Дальність виявлення: реактивні (м)</Ukrainian>
-        </Key>
-        <Key ID="STR_cbr_arg_rocket_desc">
-            <English>Range at which unguided rocket fire is located. Rockets are seen furthest: bigger and with a steeper climb. Guided missiles are never counted.</English>
-            <Russian>Дальность засечки неуправляемых ракет. Их видно дальше всего: они крупнее и круче набирают высоту. Управляемые ракеты не засекаются никогда.</Russian>
-            <Ukrainian>Дальність засічки некерованих ракет. Їх видно найдалі: вони більші й крутіше набирають висоту. Керовані ракети не засікаються ніколи.</Ukrainian>
+        <Key ID="STR_cbr_arg_range_desc">
+            <English>How far the station locates firing positions. The same for any ballistic fire, and it is exactly what the console draws as the scanned sector. Real sets vary it by target type — AN/TPQ-36 does 18 km against guns and 24 km against rockets.</English>
+            <Russian>На какой дальности станция засекает огневые позиции. Одна для любого баллистического огня, и ровно её пульт рисует как зону сканирования. У реальных станций она разная по типу цели — у AN/TPQ-36 это 18 км по орудиям и 24 км по ракетам.</Russian>
+            <Ukrainian>На якій дальності станція засікає вогневі позиції. Одна для будь-якого балістичного вогню, і саме її пульт малює як зону сканування. У реальних станцій вона різна за типом цілі — у AN/TPQ-36 це 18 км по гарматах і 24 км по ракетах.</Ukrainian>
         </Key>
         <Key ID="STR_cbr_arg_sector">
             <English>Search sector (deg)</English>

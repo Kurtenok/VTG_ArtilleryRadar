@@ -36,23 +36,11 @@ class CfgVehicles {
         isDisposable = 0;
 
         class Arguments: ArgumentsBaseUnits {
-            class RangeMortar {
-                displayName = "$STR_cbr_arg_mortar";
-                description = "$STR_cbr_arg_mortar_desc";
+            class Range {
+                displayName = "$STR_cbr_arg_range";
+                description = "$STR_cbr_arg_range_desc";
                 typeName = "NUMBER";
-                defaultValue = CBR_RANGE_MORTAR;
-            };
-            class RangeGun {
-                displayName = "$STR_cbr_arg_gun";
-                description = "$STR_cbr_arg_gun_desc";
-                typeName = "NUMBER";
-                defaultValue = CBR_RANGE_GUN;
-            };
-            class RangeRocket {
-                displayName = "$STR_cbr_arg_rocket";
-                description = "$STR_cbr_arg_rocket_desc";
-                typeName = "NUMBER";
-                defaultValue = CBR_RANGE_ROCKET;
+                defaultValue = CBR_RANGE;
             };
             class Sector {
                 displayName = "$STR_cbr_arg_sector";

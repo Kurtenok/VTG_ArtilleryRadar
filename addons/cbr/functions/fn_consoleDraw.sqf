@@ -19,8 +19,8 @@ if (isNull _veh) exitWith {};
 private _pos = getPosATL _veh;
 private _bearing = _veh getVariable ["cbr_bearing", getDir _veh];
 private _sector = _veh getVariable ["cbr_sector", CBR_SECTOR];
-private _ranges = _veh getVariable ["cbr_ranges", [CBR_RANGE_MORTAR, CBR_RANGE_GUN, CBR_RANGE_ROCKET]];
-private _far = selectMax _ranges;
+// зона, що малюється, і є зона сканування: одне число, без усереднень
+private _far = _veh getVariable ["cbr_range", CBR_RANGE];
 
 private _half = _sector / 2;
 private _fnc_at = {

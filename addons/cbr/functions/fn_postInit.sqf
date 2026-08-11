@@ -27,18 +27,14 @@ addMissionEventHandler ["ProjectileCreated", {
     // не наш снаряд — його порахує машина того, хто стріляв
     if (!local _proj) exitWith {};
 
-    // куля відсіюється двома перевірками типу й далі не йде
-    private _kind = -1;
-    if (_proj isKindOf "ShellCore") then {
-        _kind = CBR_KIND_GUN;
-    } else {
-        // кероване не рахується: контрбатарейний радар шукає балістику,
-        // а ПТУР і ЗУР летять своїм двигуном і своєю логікою
-        if (_proj isKindOf "RocketCore" && {!(_proj isKindOf "MissileCore")}) then {
-            _kind = CBR_KIND_ROCKET;
-        };
-    };
-    if (_kind < 0) exitWith {};
+    /*
+        Куля відсіюється двома перевірками типу й далі не йде. Кероване
+        не рахується: контрбатарейний радар шукає балістику, а ПТУР і
+        ЗУР летять своїм двигуном і своєю логікою.
+    */
+    private _ballistic = _proj isKindOf "ShellCore"
+        || {_proj isKindOf "RocketCore" && {!(_proj isKindOf "MissileCore")}};
+    if (!_ballistic) exitWith {};
 
     if (cbr_radars isEqualTo []) exitWith {};
 
@@ -54,10 +50,6 @@ addMissionEventHandler ["ProjectileCreated", {
     */
     private _elev = asin (((_vel select 2) / _speed) max -1 min 1);
     if (_elev < CBR_MIN_ELEV) exitWith {};
-
-    // міномет відрізняється дульною швидкістю, а не крутизною дуги:
-    // по куту гаубиця на навісній траєкторії щоразу була б «мінометом»
-    if (_kind == CBR_KIND_GUN && {_speed < CBR_MORTAR_SPEED}) then { _kind = CBR_KIND_MORTAR };
 
     /*
         Останній фільтр перед мережею: чи є взагалі радар, до якого
@@ -81,6 +73,6 @@ addMissionEventHandler ["ProjectileCreated", {
     // каже, КОГО накривають, чого з самої позиції не видно
     private _az = (_vel select 0) atan2 (_vel select 1);
 
-    [_pos, _kind, [typeOf _proj] call cbr_fnc_caliber, round _speed, (round _az + 360) mod 360, side _src]
+    [_pos, [typeOf _proj] call cbr_fnc_caliber, round _speed, (round _az + 360) mod 360, side _src]
         remoteExec ["cbr_fnc_detect", 2];
 }];
