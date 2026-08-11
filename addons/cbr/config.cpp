@@ -54,6 +54,12 @@ class CfgVehicles {
                 typeName = "NUMBER";
                 defaultValue = CBR_ERROR;
             };
+            class Delay {
+                displayName = "$STR_cbr_arg_delay";
+                description = "$STR_cbr_arg_delay_desc";
+                typeName = "NUMBER";
+                defaultValue = CBR_DELAY;
+            };
         };
     };
 };

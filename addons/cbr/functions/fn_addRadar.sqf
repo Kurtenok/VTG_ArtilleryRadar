@@ -3,7 +3,7 @@
 /*
     Function: cbr_fnc_addRadar
     Робить машину контрбатарейним радаром:
-        [_veh, [дальність, сектор, похибка]] call cbr_fnc_addRadar;
+        [_veh, [дальність, сектор, похибка, затримка]] call cbr_fnc_addRadar;
 
     Реєстр веде КОЖНА машина: за ним машина стрільця вирішує, чи є сенс
     узагалі щось надсилати. Тому список і найбільша дальність публічні.
@@ -19,7 +19,8 @@ if (isNull _veh) exitWith {};
 _settings params [
     ["_range", CBR_RANGE, [0]],
     ["_sector", CBR_SECTOR, [0]],
-    ["_error", CBR_ERROR, [0]]
+    ["_error", CBR_ERROR, [0]],
+    ["_delay", CBR_DELAY, [0]]
 ];
 
 if (isServer) then {
@@ -28,6 +29,7 @@ if (isServer) then {
     _veh setVariable ["cbr_range", _range, true];
     _veh setVariable ["cbr_sector", 0 max _sector min 360, true];
     _veh setVariable ["cbr_error", _error max 0, true];
+    _veh setVariable ["cbr_delay", _delay max 0, true];
 
     // найбільша дальність у місії: одним порівнянням машина стрільця
     // відсікає обстріли, до яких жоден радар не дотягується

@@ -1,6 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project name="vtgcbr">
     <Package name="cbr">
+        <Key ID="STR_cbr_arg_delay">
+            <English>Time to fix (s)</English>
+            <Russian>Задержка засечки (с)</Russian>
+            <Ukrainian>Затримка засічки (с)</Ukrainian>
+        </Key>
+        <Key ID="STR_cbr_arg_delay_desc">
+            <English>Delay before a shot shows up on the console: the station has to track a stretch of the trajectory before it can compute back to the origin.</English>
+            <Russian>Задержка до появления выстрела на пульте: станции нужно отследить участок траектории, прежде чем считать назад к точке старта.</Russian>
+            <Ukrainian>Затримка до появи пострілу на пульті: станції треба відстежити ділянку траєкторії, перш ніж рахувати назад до точки старту.</Ukrainian>
+        </Key>
         <Key ID="STR_cbr_arg_error">
             <English>Error, fraction of range</English>
             <Russian>Ошибка, доля дальности</Russian>
