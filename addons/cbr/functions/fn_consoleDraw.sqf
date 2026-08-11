@@ -79,14 +79,15 @@ private _sel = uiNamespace getVariable ["cbr_sel", 0];
 private _now = time;
 
 {
-    _x params ["_id", "_p", "_cal", "_speed", "_at", "_rounds", ["_sent", false], ["_err", 0], ["_fireAz", 0]];
+    _x params ["_id", "_p", "_cal", "_speed", "_at", "_rounds", ["_sent", CBR_CH_NONE], ["_err", 0], ["_fireAz", 0]];
 
     private _age = _now - _at;
     private _fresh = _age < CBR_HOT_AGE;
 
     private _col = switch (true) do {
         case (_forEachIndex == _sel): { CBR_COL_SEL };
-        case (_sent): { CBR_COL_SENT };
+        case (_sent == CBR_CH_SIDE): { CBR_COL_SENT };
+        case (_sent == CBR_CH_GROUP): { CBR_COL_SENT_GRP };
         case (_fresh): { CBR_COL_HOT };
         default { CBR_COL_MAIN };
     };

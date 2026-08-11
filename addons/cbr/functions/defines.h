@@ -76,7 +76,13 @@
 #define CBR_COL_FAINT [0.35, 0.95, 0.5, 0.12]
 #define CBR_COL_HOT [1, 0.6, 0.15, 1]      // засічка молодша за CBR_HOT_AGE
 #define CBR_COL_SEL [1, 1, 1, 1]
-#define CBR_COL_SENT [0.45, 0.75, 1, 1]    // вже передана в штаб
+#define CBR_COL_SENT [0.45, 0.75, 1, 1]     // виведена на карту сторони
+#define CBR_COL_SENT_GRP [0.4, 0.85, 0.85, 1] // лише групі: не було ДВ
+
+// Канал виводу засічки
+#define CBR_CH_NONE 0
+#define CBR_CH_GROUP 1
+#define CBR_CH_SIDE 2
 
 #define CBR_HOT_AGE 45     // скільки секунд засічка вважається свіжою
 #define CBR_SWEEP_PERIOD 2 // період проходу розгортки по сектору, с

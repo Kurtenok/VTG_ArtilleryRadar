@@ -89,7 +89,7 @@ private _seen = [];
 
         // [0 номер, 1 точка, 2 калібр, 3 швидкість, 4 час, 5 пострілів,
         //  6 передано, 7 радіус невизначеності, 8 азимут стрільби]
-        _log pushBack [_n, _fix, _cal, _speed, time, 1, false, _err, _fireAz];
+        _log pushBack [_n, _fix, _cal, _speed, time, 1, CBR_CH_NONE, _err, _fireAz];
         if (count _log > CBR_ACQ_MAX) then { _log deleteAt 0 };
     };
 
