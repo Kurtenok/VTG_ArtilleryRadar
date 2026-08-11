@@ -1,0 +1,10 @@
+name = "Radar"
+author = "Kurten"
+prefix = "vtgcbr"
+mainprefix = "z"
+
+[version]
+major = 0
+minor = 1
+patch = 0
+git_hash = 0

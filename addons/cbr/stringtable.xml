@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project name="vtgcbr">
+    <Package name="cbr">
+        <Key ID="STR_cbr_arg_error">
+            <English>Error, fraction of range</English>
+            <Russian>Ошибка, доля дальности</Russian>
+            <Ukrainian>Похибка, частка дальності</Ukrainian>
+        </Key>
+        <Key ID="STR_cbr_arg_error_desc">
+            <English>How far the reported point can sit from the real gun, as a fraction of the distance to it: 0.004 means 80 m at 20 km. The radar computes back along a short arc, so an angular error grows with distance.</English>
+            <Russian>Насколько отметка может отстоять от настоящего орудия, долей от расстояния до него: 0.004 — это 80 м на 20 км. Радар считает назад по короткому участку дуги, поэтому угловая ошибка растёт с дальностью.</Russian>
+            <Ukrainian>Наскільки позначка може відстояти від справжньої гармати, часткою від відстані до неї: 0.004 — це 80 м на 20 км. Радар рахує назад по короткій ділянці дуги, тому кутова помилка росте з дальністю.</Ukrainian>
+        </Key>
+        <Key ID="STR_cbr_arg_gun">
+            <English>Detection range: guns (m)</English>
+            <Russian>Дальность обнаружения: орудия (м)</Russian>
+            <Ukrainian>Дальність виявлення: гармати (м)</Ukrainian>
+        </Key>
+        <Key ID="STR_cbr_arg_gun_desc">
+            <English>Range at which howitzer and gun fire is located. AN/TPQ-36 does 18 km, AN/TPQ-37 up to 50 km.</English>
+            <Russian>Дальность засечки огня гаубиц и пушек. У AN/TPQ-36 это 18 км, у AN/TPQ-37 — до 50 км.</Russian>
+            <Ukrainian>Дальність засічки вогню гаубиць і гармат. У AN/TPQ-36 це 18 км, у AN/TPQ-37 — до 50 км.</Ukrainian>
+        </Key>
+        <Key ID="STR_cbr_arg_mortar">
+            <English>Detection range: mortars (m)</English>
+            <Russian>Дальность обнаружения: миномёты (м)</Russian>
+            <Ukrainian>Дальність виявлення: міномети (м)</Ukrainian>
+        </Key>
+        <Key ID="STR_cbr_arg_mortar_desc">
+            <English>Range at which mortar fire is located. Mortars are told apart by muzzle velocity, not by how steep the arc is: below 350 m/s counts as a mortar.</English>
+            <Russian>Дальность засечки миномётного огня. Миномёт отличается по дульной скорости, а не по крутизне дуги: ниже 350 м/с считается миномётом.</Russian>
+            <Ukrainian>Дальність засічки мінометного вогню. Міномет відрізняється дульною швидкістю, а не крутизною дуги: нижче 350 м/с вважається мінометом.</Ukrainian>
+        </Key>
+        <Key ID="STR_cbr_arg_rocket">
+            <English>Detection range: rockets (m)</English>
+            <Russian>Дальность обнаружения: реактивные (м)</Russian>
+            <Ukrainian>Дальність виявлення: реактивні (м)</Ukrainian>
+        </Key>
+        <Key ID="STR_cbr_arg_rocket_desc">
+            <English>Range at which unguided rocket fire is located. Rockets are seen furthest: bigger and with a steeper climb. Guided missiles are never counted.</English>
+            <Russian>Дальность засечки неуправляемых ракет. Их видно дальше всего: они крупнее и круче набирают высоту. Управляемые ракеты не засекаются никогда.</Russian>
+            <Ukrainian>Дальність засічки некерованих ракет. Їх видно найдалі: вони більші й крутіше набирають висоту. Керовані ракети не засікаються ніколи.</Ukrainian>
+        </Key>
+        <Key ID="STR_cbr_arg_sector">
+            <English>Search sector (deg)</English>
+            <Russian>Сектор обзора (град)</Russian>
+            <Ukrainian>Сектор огляду (град)</Ukrainian>
+        </Key>
+        <Key ID="STR_cbr_arg_sector_desc">
+            <English>Width of the sector the radar watches, counted from the vehicle's nose: turn the vehicle to aim the sector. 360 means all-round watch. Real sets use 90.</English>
+            <Russian>Ширина сектора, который радар держит под наблюдением; отсчёт от носа машины, так что сектор наводится её разворотом. 360 — круговой обзор. У реальных станций 90.</Russian>
+            <Ukrainian>Ширина сектора, який радар тримає під наглядом; відлік від носа машини, тож сектор наводиться її розворотом. 360 — круговий огляд. У реальних станцій 90.</Ukrainian>
+        </Key>
+        <Key ID="STR_cbr_cat">
+            <English>VTG Counter-battery radar</English>
+            <Russian>VTG Контрбатарейный радар</Russian>
+            <Ukrainian>VTG Контрбатарейний радар</Ukrainian>
+        </Key>
+        <Key ID="STR_cbr_label">
+            <English>%1 mm, %2 m/s</English>
+            <Russian>%1 мм, %2 м/с</Russian>
+            <Ukrainian>%1 мм, %2 м/с</Ukrainian>
+        </Key>
+        <Key ID="STR_cbr_label_nocal">
+            <English>%1 m/s</English>
+            <Russian>%1 м/с</Russian>
+            <Ukrainian>%1 м/с</Ukrainian>
+        </Key>
+        <Key ID="STR_cbr_module">
+            <English>Counter-battery radar</English>
+            <Russian>Контрбатарейный радар</Russian>
+            <Ukrainian>Контрбатарейний радар</Ukrainian>
+        </Key>
+        <Key ID="STR_cbr_set_life">
+            <English>Marker lifetime (s)</English>
+            <Russian>Время жизни отметки (с)</Russian>
+            <Ukrainian>Час життя позначки (с)</Ukrainian>
+        </Key>
+        <Key ID="STR_cbr_set_life_desc">
+            <English>How long a firing position stays on the map. Each new shot from the same spot extends it.</English>
+            <Russian>Сколько огневая позиция держится на карте. Каждый новый выстрел с того же места продлевает её.</Russian>
+            <Ukrainian>Скільки вогнева позиція тримається на карті. Кожен новий постріл з того самого місця продовжує її.</Ukrainian>
+        </Key>
+        <Key ID="STR_cbr_set_vehicles">
+            <English>Radar vehicle classes</English>
+            <Russian>Классы техники с радаром</Russian>
+            <Ukrainian>Класи техніки з радаром</Ukrainian>
+        </Key>
+        <Key ID="STR_cbr_set_vehicles_desc">
+            <English>Vehicle classes that carry a counter-battery radar by default, separated by commas or spaces. A module placed on a vehicle overrides this list.</English>
+            <Russian>Классы техники, которая по умолчанию несёт контрбатарейный радар; через запятую или пробел. Модуль, поставленный на машину, старше этого списка.</Russian>
+            <Ukrainian>Класи техніки, що за замовчуванням несе контрбатарейний радар; через кому або пробіл. Модуль, поставлений на машину, старший за цей список.</Ukrainian>
+        </Key>
+    </Package>
+</Project>
