@@ -107,9 +107,9 @@
             <Ukrainian>НАПРЯМОК СЕКТОРА</Ukrainian>
         </Key>
         <Key ID="STR_cbr_ui_head">
-            <English>TIME   GRID     CAL  VEL  RDS</English>
-            <Russian>ВРЕМЯ  КВАДРАТ  КАЛ  СКР  ВЫС</Russian>
-            <Ukrainian>ЧАС    КВАДРАТ  КАЛ  ШВД  ПСТ</Ukrainian>
+            <English>TIME   GRID     CAL  VEL  DIR  RDS</English>
+            <Russian>ВРЕМЯ  КВАДРАТ  КАЛ  СКР  НАПР ВЫС</Russian>
+            <Ukrainian>ЧАС    КВАДРАТ  КАЛ  ШВД  НАПР ПСТ</Ukrainian>
         </Key>
         <Key ID="STR_cbr_ui_keys">
             <English>A / D — slew sector      W / S — select acquisition      ENTER — transmit to HQ      ESC — leave console</English>

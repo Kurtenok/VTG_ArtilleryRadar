@@ -35,7 +35,7 @@ private _sector = _veh getVariable ["cbr_sector", CBR_SECTOR];
 
     if (_i >= count _log) exitWith { _c ctrlSetStructuredText parseText ""; _c ctrlCommit 0 };
 
-    (_log select _i) params ["_id", "_p", "_cal", "_speed", "_at", "_rounds", ["_sent", false]];
+    (_log select _i) params ["_id", "_p", "_cal", "_speed", "_at", "_rounds", ["_sent", false], "", ["_fireAz", 0]];
 
     private _colour = switch (true) do {
         case (_i == _sel): { "#ffffff" };
@@ -47,13 +47,14 @@ private _sector = _veh getVariable ["cbr_sector", CBR_SECTOR];
     private _calText = [format ["%1", _cal], "---"] select (_cal <= 0);
 
     _c ctrlSetStructuredText parseText format [
-        "<t color='%1'>%2 %3  %4  %5  %6  x%7</t>",
+        "<t color='%1'>%2 %3  %4  %5  %6  %7  x%8</t>",
         _colour,
         ["  ", ">"] select (_i == _sel),
         [_at] call cbr_fnc_clock,
         mapGridPosition _p,
         _calText,
         _speed,
+        format ["%1", round _fireAz],
         _rounds
     ];
     _c ctrlCommit 0;

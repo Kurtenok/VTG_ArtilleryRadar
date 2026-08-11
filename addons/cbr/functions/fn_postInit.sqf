@@ -76,5 +76,11 @@ addMissionEventHandler ["ProjectileCreated", {
 
     // на карту йдуть ЗАМІРИ, а не здогад про тип знаряддя: калібр і
     // дульна швидкість, а вже що це за система — справа розрахунку
-    [_pos, _kind, [typeOf _proj] call cbr_fnc_caliber, round _speed, side _src] remoteExec ["cbr_fnc_detect", 2];
+    // азимут пострілу: куди саме било знаряддя. Станція рахує і точку
+    // старту, і точку падіння, тож напрямок стрільби вона знає — а він
+    // каже, КОГО накривають, чого з самої позиції не видно
+    private _az = (_vel select 0) atan2 (_vel select 1);
+
+    [_pos, _kind, [typeOf _proj] call cbr_fnc_caliber, round _speed, (round _az + 360) mod 360, side _src]
+        remoteExec ["cbr_fnc_detect", 2];
 }];

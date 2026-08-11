@@ -79,25 +79,53 @@ private _sel = uiNamespace getVariable ["cbr_sel", 0];
 private _now = time;
 
 {
-    _x params ["_id", "_p", "_cal", "_speed", "_at", "_rounds"];
+    _x params ["_id", "_p", "_cal", "_speed", "_at", "_rounds", ["_sent", false], ["_err", 0], ["_fireAz", 0]];
 
     private _age = _now - _at;
+    private _fresh = _age < CBR_HOT_AGE;
+
     private _col = switch (true) do {
         case (_forEachIndex == _sel): { CBR_COL_SEL };
-        case (_x param [6, false]): { CBR_COL_SENT };
-        case (_age < CBR_HOT_AGE): { CBR_COL_HOT };
+        case (_sent): { CBR_COL_SENT };
+        case (_fresh): { CBR_COL_HOT };
         default { CBR_COL_MAIN };
+    };
+
+    /*
+        Коло невизначеності — не прикраса: його радіус і є похибка
+        зворотної екстраполяції, а сама засічка зміщена всередині нього
+        випадково. Тобто знаряддя стоїть ДЕСЬ У КОЛІ, і оператор бачить
+        саме це, а не вдавану точність.
+    */
+    if (_err > 0) then {
+        _map drawEllipse [_p, _err, _err, 0, _col, ""];
+    };
+
+    /*
+        Куди било знаряддя: короткий вектор від засічки за азимутом
+        стрільби. Каже, КОГО накривають, — з самої позиції цього не видно
+    */
+    private _len = (_err * 1.5) max 300;
+    _map drawLine [
+        _p,
+        [(_p select 0) + _len * sin _fireAz, (_p select 1) + _len * cos _fireAz],
+        _col
+    ];
+
+    private _label = if (_cal > 0) then {
+        format ["%1  %2", _id, format [localize "STR_cbr_label", _cal, _speed]]
+    } else {
+        format ["%1  %2", _id, format [localize "STR_cbr_label_nocal", _speed]]
     };
 
     _map drawIcon [
         "\A3\ui_f\data\map\markers\military\triangle_CA.paa", _col,
         _p, 22 * CBR_PW, 22 * CBR_PH, 0,
-        format ["%1", _id], 0, 20 * CBR_PH, "RobotoCondensed"
+        _label, 0, 20 * CBR_PH, "RobotoCondensed"
     ];
 
-    // свіжу засічку обводимо колом, що стягується: око само її знайде
-    if (_age < CBR_HOT_AGE) then {
-        private _r = 400 * (1 - _age / CBR_HOT_AGE) + 60;
-        _map drawEllipse [_p, _r, _r, 0, _col, ""];
+    // свіжа засічка блимає другим кільцем: око само знайде її серед старих
+    if (_fresh && {(floor (CBA_missionTime * 2)) % 2 == 0}) then {
+        _map drawEllipse [_p, _err * 1.1, _err * 1.1, 0, _col, ""];
     };
 } forEach (uiNamespace getVariable ["cbr_log", []]);

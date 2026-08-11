@@ -61,9 +61,31 @@ _map ctrlSetPosition [_x0, _y0 + _barH, _w - _logW, _h - 2 * _barH];
 _map ctrlCommit 0;
 _map ctrlAddEventHandler ["Draw", { _this call cbr_fnc_consoleDraw }];
 
-// станція в центрі індикатора; масштаб далі крутиться колесом
-_map ctrlMapAnimAdd [0, 0.22, getPosATL _veh];
+/*
+    Станція в центрі індикатора. Масштаб не вгадуємо числом: ставимо
+    будь-який, міряємо, скільки метрів вийшло по ширині, і одним кроком
+    перераховуємо під потрібний обхват. Так сектор влізе цілком за
+    будь-якої роздільної здатності й дальності станції.
+*/
+private _mapW = _w - _logW;
+private _want = 2.2 * selectMax (_veh getVariable ["cbr_ranges", [CBR_RANGE_ROCKET]]);
+
+_map ctrlMapAnimAdd [0, 1, getPosATL _veh];
 ctrlMapAnimCommit _map;
+
+[{
+    params ["_map", "_veh", "_mapW", "_want"];
+    if (isNull _map) exitWith {};
+
+    private _cy = safeZoneY + safeZoneH / 2;
+    private _span = (_map ctrlMapScreenToWorld [safeZoneX, _cy])
+        distance2D (_map ctrlMapScreenToWorld [safeZoneX + _mapW, _cy]);
+
+    if (_span > 1) then {
+        _map ctrlMapAnimAdd [0, _want / _span, getPosATL _veh];
+        ctrlMapAnimCommit _map;
+    };
+}, [_map, _veh, _mapW, _want]] call CBA_fnc_execNextFrame;
 
 uiNamespace setVariable ["cbr_map", _map];
 

@@ -16,7 +16,7 @@
     ближчий — у нього менша похибка.
 */
 
-params ["_pos", "_kind", "_cal", "_speed", "_side"];
+params ["_pos", "_kind", "_cal", "_speed", "_fireAz", "_side"];
 
 // засічки лягають у журнал КОЖНОЇ станції, що побачила постріл: карту
 // вони не чіпають, поки оператор не передасть їх сам
@@ -59,7 +59,12 @@ private _seen = [];
         error*дальність: sqrt від рівномірного числа не дає точкам
         збиватися до центра, тобто промах чесний по всій площі.
     */
-    private _r = _dist * (_radar getVariable ["cbr_error", CBR_ERROR]) * sqrt (random 1);
+    // РАДІУС невизначеності: у ньому десь і стоїть знаряддя
+    private _err = _dist * (_radar getVariable ["cbr_error", CBR_ERROR]);
+
+    // сама засічка зміщена всередині цього кола випадково, тож на
+    // індикаторі знаряддя опиниться не в центрі, а будь-де в ньому
+    private _r = _err * sqrt (random 1);
     private _a = random 360;
     private _fix = [(_pos select 0) + _r * sin _a, (_pos select 1) + _r * cos _a, 0];
 
@@ -82,8 +87,9 @@ private _seen = [];
         private _n = (_radar getVariable ["cbr_acqId", 0]) + 1;
         _radar setVariable ["cbr_acqId", _n];
 
-        // [номер, точка, калібр, швидкість, час, пострілів]
-        _log pushBack [_n, _fix, _cal, _speed, time, 1];
+        // [0 номер, 1 точка, 2 калібр, 3 швидкість, 4 час, 5 пострілів,
+        //  6 передано, 7 радіус невизначеності, 8 азимут стрільби]
+        _log pushBack [_n, _fix, _cal, _speed, time, 1, false, _err, _fireAz];
         if (count _log > CBR_ACQ_MAX) then { _log deleteAt 0 };
     };
 
