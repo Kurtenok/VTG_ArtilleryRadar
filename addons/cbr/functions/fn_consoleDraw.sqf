@@ -90,15 +90,13 @@ private _sel = uiNamespace getVariable ["cbr_sel", 0];
 private _now = time;
 
 {
-    _x params ["_id", "_p", "_cal", "_speed", "_at", "_rounds", ["_sent", CBR_CH_NONE], ["_err", 0], ["_fireAz", 0]];
+    _x params ["_id", "_p", "_cal", "_speed", "_at", "_rounds", ["_err", 0], ["_fireAz", 0], ["_when", 0]];
 
     private _age = _now - _at;
     private _fresh = _age < CBR_HOT_AGE;
 
     private _col = switch (true) do {
         case (_forEachIndex == _sel): { CBR_COL_SEL };
-        case (_sent == CBR_CH_SIDE): { CBR_COL_SENT };
-        case (_sent == CBR_CH_GROUP): { CBR_COL_SENT_GRP };
         case (_fresh): { CBR_COL_HOT };
         default { CBR_COL_MAIN };
     };
@@ -124,11 +122,15 @@ private _now = time;
         _col
     ];
 
-    private _label = if (_cal > 0) then {
-        format ["%1  %2", _id, format [localize "STR_cbr_label", _cal, _speed]]
+    // на індикаторі — усе, що потрібно для рішення, без заглядання в
+    // журнал: чим били, скільки разів і коли
+    private _what = if (_cal > 0) then {
+        format [localize "STR_cbr_label", _cal, _speed]
     } else {
-        format ["%1  %2", _id, format [localize "STR_cbr_label_nocal", _speed]]
+        format [localize "STR_cbr_label_nocal", _speed]
     };
+
+    private _label = format ["%1  %2  x%3  %4", _id, _what, _rounds, [_when] call cbr_fnc_hhmm];
 
     _map drawIcon [
         "\A3\ui_f\data\map\markers\military\triangle_CA.paa", _col,

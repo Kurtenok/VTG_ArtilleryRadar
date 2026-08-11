@@ -21,11 +21,13 @@ private _bearing = _veh getVariable ["cbr_bearing", getDir _veh];
 private _sector = _veh getVariable ["cbr_sector", CBR_SECTOR];
 
 (uiNamespace getVariable ["cbr_status", controlNull]) ctrlSetStructuredText parseText format [
-    "<t color='#8affa0'>%1</t>   <t color='#4d7a58'>|</t>   %2 <t color='#ffffff'>%3</t>   <t color='#4d7a58'>|</t>   %4 <t color='#ffffff'>%5</t>   <t color='#4d7a58'>|</t>   %6 <t color='#ffffff'>%7</t>",
+    "<t color='#8affa0'>%1</t>   <t color='#4d7a58'>|</t>   %2 <t color='#ffffff'>%3</t>   <t color='#4d7a58'>|</t>   %4 <t color='#ffffff'>%5</t>   <t color='#4d7a58'>|</t>   %6 <t color='#ffffff'>%7</t>   <t color='#4d7a58'>|</t>   %8 <t color='#ffffff'>%9</t>",
     localize "STR_cbr_ui_title",
     localize "STR_cbr_ui_bearing", format ["%1", round _bearing],
     localize "STR_cbr_ui_sector", format ["%1", round _sector],
-    localize "STR_cbr_ui_acq", format ["%1", count _log]
+    localize "STR_cbr_ui_acq", format ["%1", count _log],
+    // поточний час: без нього час засічки нема з чим порівняти
+    localize "STR_cbr_ui_now", [daytime] call cbr_fnc_hhmm
 ];
 
 // рядки журналу: час, квадрат, калібр, швидкість, пострілів
@@ -33,15 +35,16 @@ private _sector = _veh getVariable ["cbr_sector", CBR_SECTOR];
     private _c = _x;
     private _i = _forEachIndex;
 
+    private _del = (uiNamespace getVariable ["cbr_dels", []]) param [_i, controlNull];
+    _del ctrlShow (_i < count _log);
+
     if (_i >= count _log) exitWith { _c ctrlSetStructuredText parseText ""; _c ctrlCommit 0 };
 
-    (_log select _i) params ["_id", "_p", "_cal", "_speed", "_at", "_rounds", ["_sent", CBR_CH_NONE], "", ["_fireAz", 0]];
+    (_log select _i) params ["_id", "_p", "_cal", "_speed", "_at", "_rounds", "", ["_fireAz", 0], ["_when", 0]];
 
     private _colour = switch (true) do {
-        case (_i == _sel): { "#ffffff" };
-        case (_sent == CBR_CH_SIDE): { "#73bfff" };
-        case (_sent == CBR_CH_GROUP): { "#66d9d9" };
-        case ((time - _at) < CBR_HOT_AGE): { "#ff9926" };
+        case (_i == _sel): { "#ff9926" };
+        case ((time - _at) < CBR_HOT_AGE): { "#ffffff" };
         default { "#5af080" };
     };
 
@@ -51,7 +54,7 @@ private _sector = _veh getVariable ["cbr_sector", CBR_SECTOR];
         "<t color='%1'>%2 %3  %4  %5  %6  %7  x%8</t>",
         _colour,
         ["  ", ">"] select (_i == _sel),
-        [_at] call cbr_fnc_clock,
+        [_when] call cbr_fnc_hhmm,
         mapGridPosition _p,
         _calText,
         _speed,

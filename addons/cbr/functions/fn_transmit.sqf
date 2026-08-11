@@ -16,8 +16,7 @@ params ["_veh", "_idx"];
 private _log = uiNamespace getVariable ["cbr_log", []];
 if (_idx < 0 || {_idx >= count _log}) exitWith {};
 
-(_log select _idx) params ["_id", "_pos", "_cal", "_speed", "", "_rounds", ["_sent", CBR_CH_NONE]];
-if (_sent > CBR_CH_NONE) exitWith {};
+(_log select _idx) params ["_id", "_pos", "_cal", "_speed", "", "_rounds", "", "", ["_when", 0]];
 
 /*
     Куди лягає позначка, вирішує рація. Без довгохвильової сторона тебе
@@ -31,10 +30,10 @@ if (_sent > CBR_CH_NONE) exitWith {};
 private _lr = true;
 if (!isNil "TFAR_fnc_haveLRRadio") then { _lr = call TFAR_fnc_haveLRRadio };
 
-private _chan = [CBR_CH_GROUP, CBR_CH_SIDE] select _lr;
 private _target = [group player, [_veh] call cbr_fnc_side] select _lr;
 
-[_veh, _id, _chan] remoteExec ["cbr_fnc_markSent", 2];
+// Повторний вивід не блокуємо: мітку міг хтось стерти з карти, і
+// оператор мусить мати змогу поставити її знову скільки завгодно разів
 
 private _text = if (_cal > 0) then {
     format [localize "STR_cbr_label", _cal, _speed]
@@ -43,6 +42,10 @@ private _text = if (_cal > 0) then {
 };
 if (_rounds > 1) then { _text = format ["%1 x%2", _text, _rounds] };
 
-[_pos, _text] remoteExec ["cbr_fnc_mark", _target];
+// час на самій мітці: без нього на карті не зрозуміти, це щойно чи
+// півгодини тому
+_text = format ["%1  %2", _text, [_when] call cbr_fnc_hhmm];
+
+[_veh, _id, _pos, _text] remoteExec ["cbr_fnc_mark", _target];
 
 playSound "3DEN_notificationDefault";

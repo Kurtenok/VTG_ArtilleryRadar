@@ -101,16 +101,43 @@ private _head = [_display, [_logX, _y0 + _barH + 8 * CBR_LU, _logW2, 30 * CBR_LU
 _head ctrlSetStructuredText parseText (localize "STR_cbr_ui_head");
 _head ctrlCommit 0;
 
+// вузька колонка праворуч під кнопки прибирання
+private _delW = 40 * CBR_PXU;
+private _rowW = _logW2 - _delW - 8 * CBR_PXU;
+
 private _rows = [];
+private _dels = [];
 for "_i" from 0 to (CBR_UI_ROWS - 1) do {
-    private _r = [
+    private _y = _y0 + _barH + (44 + _i * CBR_UI_ROW_H) * CBR_LU;
+
+    _rows pushBack ([
         _display,
-        [_logX, _y0 + _barH + (44 + _i * CBR_UI_ROW_H) * CBR_LU, _logW2, CBR_UI_ROW_H * CBR_LU],
+        [_logX, _y, _rowW, CBR_UI_ROW_H * CBR_LU],
         26 * CBR_PH, CBR_COL_MAIN
-    ] call _fnc_text;
-    _rows pushBack _r;
+    ] call _fnc_text);
+
+    /*
+        Кнопка, а не клікабельний текст: у кнопки клік ловиться напевно.
+        Фон прозорий, тож на пульті вона виглядає тим самим написом.
+    */
+    private _b = _display ctrlCreate ["RscButton", -1];
+    _b ctrlSetPosition [_logX + _logW2 - _delW, _y, _delW, CBR_UI_ROW_H * CBR_LU];
+    _b ctrlSetBackgroundColor [0, 0, 0, 0];
+    _b ctrlSetTextColor CBR_COL_DIM;
+    _b ctrlSetFontHeight (24 * CBR_PH);
+    _b ctrlSetText "X";
+    _b setVariable ["cbr_row", _i];
+    _b ctrlAddEventHandler ["ButtonClick", {
+        params ["_ctrl"];
+        [uiNamespace getVariable ["cbr_veh", objNull], _ctrl getVariable ["cbr_row", -1]] call cbr_fnc_erase;
+        [] call cbr_fnc_consoleUpdate;
+    }];
+    _b ctrlShow false;
+    _b ctrlCommit 0;
+    _dels pushBack _b;
 };
 uiNamespace setVariable ["cbr_rows", _rows];
+uiNamespace setVariable ["cbr_dels", _dels];
 
 // --- нижня підказка ---
 private _hint = [_display, [_x0 + 20 * CBR_PXU, _y0 + _h - 46 * CBR_LU, _w - 40 * CBR_PXU, 34 * CBR_LU], 24 * CBR_PH, CBR_COL_DIM] call _fnc_text;

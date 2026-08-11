@@ -56,16 +56,6 @@
             <Russian>Пульт радара</Russian>
             <Ukrainian>Пульт радара</Ukrainian>
         </Key>
-        <Key ID="STR_cbr_set_life">
-            <English>Marker lifetime (s)</English>
-            <Russian>Время жизни отметки (с)</Russian>
-            <Ukrainian>Час життя позначки (с)</Ukrainian>
-        </Key>
-        <Key ID="STR_cbr_set_life_desc">
-            <English>How long a firing position stays on the map. Each new shot from the same spot extends it.</English>
-            <Russian>Сколько огневая позиция держится на карте. Каждый новый выстрел с того же места продлевает её.</Russian>
-            <Ukrainian>Скільки вогнева позиція тримається на карті. Кожен новий постріл з того самого місця продовжує її.</Ukrainian>
-        </Key>
         <Key ID="STR_cbr_set_vehicles">
             <English>Radar vehicle classes</English>
             <Russian>Классы техники с радаром</Russian>
@@ -92,9 +82,14 @@
             <Ukrainian>ЧАС    КВАДРАТ  КАЛ  ШВД  НАПР ПСТ</Ukrainian>
         </Key>
         <Key ID="STR_cbr_ui_keys">
-            <English>A / D — slew sector      W / S — pick acquisition      ENTER — put on map (side with a long-range radio, otherwise group only)      ESC — leave console</English>
-            <Russian>A / D — поворот сектора      W / S — выбор засечки      ENTER — вывести на карту (сторона — с ДВ рацией, без неё только группе)      ESC — отойти от пульта</Russian>
-            <Ukrainian>A / D — поворот сектора      W / S — вибір засічки      ENTER — вивести на карту (сторона — з ДХ рацією, без неї лише групі)      ESC — відійти від пульта</Ukrainian>
+            <English>A / D — slew sector      W / S — pick acquisition      ENTER — put on map (side with a long-range radio, otherwise group only)      DEL — drop acquisition and its marker      ESC — leave console</English>
+            <Russian>A / D — поворот сектора      W / S — выбор засечки      ENTER — вывести на карту (сторона — с ДВ рацией, без неё только группе)      DEL — убрать засечку и её метку      ESC — отойти от пульта</Russian>
+            <Ukrainian>A / D — поворот сектора      W / S — вибір засічки      ENTER — вивести на карту (сторона — з ДХ рацією, без неї лише групі)      DEL — прибрати засічку і її позначку      ESC — відійти від пульта</Ukrainian>
+        </Key>
+        <Key ID="STR_cbr_ui_now">
+            <English>TIME NOW</English>
+            <Russian>СЕЙЧАС</Russian>
+            <Ukrainian>ЗАРАЗ</Ukrainian>
         </Key>
         <Key ID="STR_cbr_ui_sector">
             <English>WIDTH</English>

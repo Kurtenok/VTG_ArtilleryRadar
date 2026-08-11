@@ -34,7 +34,6 @@
 */
 #define CBR_ERROR 0.004
 
-#define CBR_MARKER_LIFE 300  // скільки живе передана позначка на карті, с
 #define CBR_MERGE 250        // ближчі засічки — та сама вогнева позиція, м
 #define CBR_ACQ_LIFE 900     // скільки засічка тримається в журналі станції, с
 #define CBR_ACQ_MAX 24       // глибина журналу: старіші витісняються
@@ -62,15 +61,10 @@
 #define CBR_COL_MAIN [0.35, 0.95, 0.5, 0.9]
 #define CBR_COL_DIM [0.35, 0.95, 0.5, 0.28]
 #define CBR_COL_FAINT [0.35, 0.95, 0.5, 0.12]
-#define CBR_COL_HOT [1, 0.6, 0.15, 1]      // засічка молодша за CBR_HOT_AGE
-#define CBR_COL_SEL [1, 1, 1, 1]
-#define CBR_COL_SENT [0.45, 0.75, 1, 1]     // виведена на карту сторони
-#define CBR_COL_SENT_GRP [0.4, 0.85, 0.85, 1] // лише групі: не було ДВ
-
-// Канал виводу засічки
-#define CBR_CH_NONE 0
-#define CBR_CH_GROUP 1
-#define CBR_CH_SIDE 2
+// Обрана мітка — найпомітніша: саме з нею оператор зараз працює.
+// Свіжа лише біла: вона привертає увагу, але вибір за людиною
+#define CBR_COL_SEL [1, 0.6, 0.15, 1]
+#define CBR_COL_HOT [1, 1, 1, 1]   // засічка молодша за CBR_HOT_AGE
 
 #define CBR_HOT_AGE 45     // скільки секунд засічка вважається свіжою
 #define CBR_SWEEP_PERIOD 2 // період проходу розгортки по сектору, с

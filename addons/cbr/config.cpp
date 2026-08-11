@@ -122,16 +122,18 @@ class CfgFunctions {
             class addRadar {};
             class caliber {};
             class canUse {};
-            class clock {};
             class console {};
             class consoleDraw {};
             class consoleKey {};
             class consoleUpdate {};
             class createAceMenu {};
             class detect {};
+            class drop {};
+            class erase {};
             class initModule {};
+            class hhmm {};
             class mark {};
-            class markSent {};
+            class unmark {};
             class preInit { preInit = 1; };
             class postInit { postInit = 1; };
             class side {};
@@ -152,7 +154,8 @@ class CfgRemoteExec {
         class cbr_fnc_report { allowedTargets = 0; };    // сервер -> клієнти сторони
         class cbr_fnc_addRadar { allowedTargets = 0; };  // підключення з Zeus + JIP
         class cbr_fnc_setBearing { allowedTargets = 0; }; // доворот сектора оператором
-        class cbr_fnc_markSent { allowedTargets = 0; };   // засічку передано
         class cbr_fnc_mark { allowedTargets = 0; };       // позначка своїй стороні
+        class cbr_fnc_drop { allowedTargets = 0; };       // прибрати засічку з журналу
+        class cbr_fnc_unmark { allowedTargets = 0; };     // прибрати позначку з карти
     };
 };

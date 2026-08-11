@@ -31,9 +31,14 @@ switch (_key) do {
         uiNamespace setVariable ["cbr_sel", (_sel + 1) min (((count _log) - 1) max 0)];
     };
 
-    // передати засічку в штаб
+    // вивести засічку на карту
     case 28; case 156; case 57: {
         [_veh, _sel] call cbr_fnc_transmit;
+    };
+
+    // прибрати обрану засічку з журналу
+    case 211: {
+        [_veh, _sel] call cbr_fnc_erase;
     };
 
     default { false };

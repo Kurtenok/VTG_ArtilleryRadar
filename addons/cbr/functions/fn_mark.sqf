@@ -2,20 +2,24 @@
 
 /*
     Function: cbr_fnc_mark
-    Передана вогнева позиція на карті. Позначка локальна: її бачить
-    лише своя сторона, і мережі вона не коштує нічого.
+    Вогнева позиція на карті. Позначка локальна: її бачить лише той, кому
+    оператор її вивів, і мережі вона не коштує нічого.
+
+    Не гасне сама. Прибирає її оператор із пульта — там же, де й ставив.
+
+    Ім'я складається з машини й номера засічки, тож у всіх воно однакове:
+    за ним потім і видаляють. Заразом повторний вивід тієї самої засічки
+    оновлює ту саму позначку, а не плодить другу поверх першої.
 */
 
-params ["_pos", "_text"];
+params ["_veh", "_id", "_pos", "_text"];
 
 if (!hasInterface) exitWith {};
 
-private _n = missionNamespace getVariable ["cbr_markerId", 0];
-missionNamespace setVariable ["cbr_markerId", _n + 1];
+private _name = format ["cbr_%1_%2", netId _veh, _id];
+deleteMarkerLocal _name;
 
-private _marker = createMarkerLocal [format ["cbr_fix_%1", _n], _pos];
-_marker setMarkerTypeLocal CBR_MARKER_TYPE;
-_marker setMarkerColorLocal "ColorRed";
-_marker setMarkerTextLocal _text;
-
-[{ deleteMarkerLocal _this }, _marker, missionNamespace getVariable ["cbr_set_life", CBR_MARKER_LIFE]] call CBA_fnc_waitAndExecute;
+createMarkerLocal [_name, _pos];
+_name setMarkerTypeLocal CBR_MARKER_TYPE;
+_name setMarkerColorLocal "ColorRed";
+_name setMarkerTextLocal _text;
