@@ -11,13 +11,9 @@ params ["_veh", "_idx"];
 private _log = uiNamespace getVariable ["cbr_log", []];
 if (_idx < 0 || {_idx >= count _log}) exitWith {};
 
-private _id = (_log select _idx) select 0;
-
-[_veh, _id] remoteExec ["cbr_fnc_drop", 2];
-
-// позначка йде разом із засічкою: прибрати її інакше нічим, бо
-// скриптову мітку гравець із карти не видалить
-[_veh, _id] remoteExec ["cbr_fnc_unmark", 0];
+// мітку на карті не чіпаємо: вона користувацька, і прибрати її з
+// карти може будь-хто сам
+[_veh, (_log select _idx) select 0] remoteExec ["cbr_fnc_drop", 2];
 
 // прибираємо і зі свого списку одразу: журнал приїде з мережі із
 // затримкою, а пульт має відгукуватись на натискання миттєво

@@ -133,7 +133,6 @@ class CfgFunctions {
             class initModule {};
             class hhmm {};
             class mark {};
-            class unmark {};
             class preInit { preInit = 1; };
             class postInit { postInit = 1; };
             class side {};
@@ -156,6 +155,5 @@ class CfgRemoteExec {
         class cbr_fnc_setBearing { allowedTargets = 0; }; // доворот сектора оператором
         class cbr_fnc_mark { allowedTargets = 0; };       // позначка своїй стороні
         class cbr_fnc_drop { allowedTargets = 0; };       // прибрати засічку з журналу
-        class cbr_fnc_unmark { allowedTargets = 0; };     // прибрати позначку з карти
     };
 };
