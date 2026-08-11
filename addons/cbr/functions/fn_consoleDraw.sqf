@@ -32,9 +32,17 @@ private _fnc_at = {
 private _from = _bearing - _half;
 private _to = _bearing + _half;
 
-for "_ring" from 1 to CBR_RINGS do {
-    private _d = _far * _ring / CBR_RINGS;
-    private _col = [CBR_COL_FAINT, CBR_COL_DIM] select (_ring == CBR_RINGS);
+// проміжні дуги з постійним кроком, зовнішня — рівно на дальності
+private _marks = [];
+private _d = CBR_RING_STEP;
+while { _d < _far } do {
+    _marks pushBack [_d, CBR_COL_FAINT];
+    _d = _d + CBR_RING_STEP;
+};
+_marks pushBack [_far, CBR_COL_DIM];
+
+{
+    _x params ["_d", "_col"];
 
     private _prev = [_from, _d] call _fnc_at;
     private _az = _from + CBR_ARC_STEP;
@@ -46,13 +54,16 @@ for "_ring" from 1 to CBR_RINGS do {
     };
     _map drawLine [_prev, [_to, _d] call _fnc_at, _col];
 
-    // підпис дальності по осі сектора
+    // підпис по осі сектора; півкілометри пишемо з десятою
+    private _km = _d / 1000;
+    private _txt = if ((_km - floor _km) < 0.05) then { str round _km } else { _km toFixed 1 };
+
     _map drawIcon [
         "#(argb,8,8,3)color(0,0,0,0)", CBR_COL_DIM,
         [_bearing, _d] call _fnc_at, 0, 0, 0,
-        format ["%1", round (_d / 1000)], 0, CBR_RING_TEXT, "RobotoCondensed"
+        _txt, 0, CBR_RING_TEXT, "RobotoCondensed"
     ];
-};
+} forEach _marks;
 
 // --- межі сектора ---
 _map drawLine [_pos, [_from, _far] call _fnc_at, CBR_COL_DIM];
