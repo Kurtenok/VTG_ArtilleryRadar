@@ -40,13 +40,9 @@ private _sector = _veh getVariable ["cbr_sector", CBR_SECTOR];
 
     if (_i >= count _log) exitWith { _c ctrlSetStructuredText parseText ""; _c ctrlCommit 0 };
 
-    (_log select _i) params ["_id", "_p", "_cal", "_speed", "_at", "_rounds", "", ["_fireAz", 0], ["_when", 0]];
+    (_log select _i) params ["_id", "_p", "_cal", "_speed", "", "_rounds", "", ["_fireAz", 0], ["_when", 0]];
 
-    private _colour = switch (true) do {
-        case (_i == _sel): { "#ff9926" };
-        case ((time - _at) < CBR_HOT_AGE): { "#ffffff" };
-        default { "#5af080" };
-    };
+    private _colour = ["#ffffff", "#ff9926"] select (_i == _sel);
 
     private _calText = [format ["%1", _cal], "---"] select (_cal <= 0);
 

@@ -93,13 +93,7 @@ private _now = time;
     _x params ["_id", "_p", "_cal", "_speed", "_at", "_rounds", ["_err", 0], ["_fireAz", 0], ["_when", 0]];
 
     private _age = _now - _at;
-    private _fresh = _age < CBR_HOT_AGE;
-
-    private _col = switch (true) do {
-        case (_forEachIndex == _sel): { CBR_COL_SEL };
-        case (_fresh): { CBR_COL_HOT };
-        default { CBR_COL_MAIN };
-    };
+    private _col = [CBR_COL_FIX, CBR_COL_SEL] select (_forEachIndex == _sel);
 
     /*
         Коло невизначеності — не прикраса: його радіус і є похибка
@@ -132,14 +126,30 @@ private _now = time;
 
     private _label = format ["%1  %2  x%3  %4", _id, _what, _rounds, [_when] call cbr_fnc_hhmm];
 
+    /*
+        Імпульс появи. Фаза береться від віку засічки, а не від
+        загального часу, тож кожна нова починає власний відлік і не
+        пульсує в такт із сусідніми.
+    */
+    private _pop = 0;
+    if (_age < CBR_PING_FOR && {_err > 0}) then {
+        private _t = (_age mod CBR_PING_PERIOD) / CBR_PING_PERIOD;
+
+        private _r = _err * (0.35 + CBR_PING_GROW * _t);
+        _map drawEllipse [
+            _p, _r, _r, 0,
+            [_col select 0, _col select 1, _col select 2, (1 - _t) * (_col select 3)],
+            ""
+        ];
+
+        // сама позначка на початку імпульсу трохи набрякає
+        _pop = 0.35 * (1 - _t);
+    };
+
+    private _size = CBR_ICON_SIZE * (1 + _pop);
     _map drawIcon [
         "\A3\ui_f\data\map\markers\military\triangle_CA.paa", _col,
-        _p, CBR_ICON_SIZE, CBR_ICON_SIZE, 0,
+        _p, _size, _size, 0,
         _label, 0, CBR_TEXT_SIZE, "RobotoCondensed"
     ];
-
-    // свіжа засічка блимає другим кільцем: око само знайде її серед старих
-    if (_fresh && {(floor (CBA_missionTime * 2)) % 2 == 0}) then {
-        _map drawEllipse [_p, _err * 1.1, _err * 1.1, 0, _col, ""];
-    };
 } forEach (uiNamespace getVariable ["cbr_log", []]);
