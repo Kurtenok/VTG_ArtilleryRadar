@@ -2,14 +2,23 @@
 
 /*
     Function: cbr_fnc_detect
-    Постріл по ОДНІЙ станції, на машині її оператора.
+    Постріл по ОДНІЙ станції, на машині її оператора. Рахує той, хто
+    станцією користується: сервер із цього не робить нічого.
 
-    Рахує той, хто станцією користується: сервер із цього не робить
-    нічого. Важке тут одне — прорахунок дуги, і лягає воно рівно на
-    того, хто дивиться на індикатор.
+    Тут дві РІЗНІ задачі, і плутати їх не можна:
 
-    Сторону й грубу дальність уже перевірила машина стрільця; сектор і
-    рельєф перевіряються тут, бо для них треба прорахувати дугу.
+        снаряд   — відмітка на індикаторі, поки він у промені. Досить
+                   самого факту, що він у зоні;
+        знаряддя — засічка в журналі. Щоб порахувати назад до вогневої,
+                   станції треба ще й ВЕСТИ снаряд якийсь час.
+
+    Звідси й наслідки. Батарея за межами зони, чиї снаряди залітають у
+    промінь, дає відмітки й засічку — станція бачить не гармату, а
+    снаряд. А снаряд, що лише черкнув край зони, дасть відмітку, але
+    засічки з нього не вийде.
+
+    Сторону вже перевірила машина стрільця; уся геометрія — тут, бо для
+    неї треба прорахувати дугу.
 */
 
 // _pos це дуло — з нього рахується вогнева; _track це знятий стан
@@ -20,26 +29,61 @@ if (isNull _radar) exitWith {};
 _track params ["_tPos", "_tVel"];
 private _arc = [_tPos, _tVel, _ammo] call cbr_fnc_arc;
 
-// станція реєструє снаряд, а не знаряддя: якщо дуга не показалась
-// з-за рельєфу, не піднялась над променем або не зайшла в сектор —
-// пострілу для неї не було
-private _got = [_radar, _arc] call cbr_fnc_acquire;
-if (_got isEqualTo []) exitWith {};
+// одна геометрія на обидві задачі
+private _win = [_radar, _arc] call cbr_fnc_track;
+if (_win isEqualTo []) exitWith {};
+_win params ["_tIn", "_tOut"];
 
 private _cal = [_ammo] call cbr_fnc_caliber;
 
-private _sigma = _radar getVariable ["cbr_error", CBR_ERROR];
+/*
+    СНАРЯД. Дуга вже прорахована, тож індикатору лишається підставити
+    час — мережею не йде нічого, і кадр коштує одного множення.
 
-// базова похибка зворотної екстраполяції на цій дальності
-private _base = ((getPosASL _radar) distance _pos) * _sigma;
+    Відлітали своє прибираються тут же, за новим пострілом, щоб не
+    заводити окремий цикл на прибирання.
+*/
+private _live = (_radar getVariable ["cbr_flight", []]) select {
+    (time - (_x select 0)) < (_x select 4)
+};
+_live pushBack [_t0, _arc, _cal, _tIn, _tOut];
+_radar setVariable ["cbr_flight", _live, true];
 
 /*
-    Засічка лягає в журнал не миттєво: станції треба відстежити
-    ділянку дуги, перш ніж рахувати назад. Затримка — за модулем.
+    ЗНАРЯДДЯ. Коротка ділянка дає відмітку, але не засічку: назад по
+    ній рахувати нема чого.
 */
+private _need = _radar getVariable ["cbr_delay", CBR_DELAY];
+if (_tOut - _tIn < _need) exitWith {};
+
+// базова похибка зворотної екстраполяції на цій дальності
+private _base = ((getPosASL _radar) distance _pos) * (_radar getVariable ["cbr_error", CBR_ERROR]);
+
+/*
+    Засічка лягає в журнал не раніше, ніж набрано супровід: станція
+    веде снаряд від входу в промінь і лише потім рахує назад.
+*/
+private _wait = (_t0 + _tIn + _need) - time;
+
+// де снаряд буде, коли супровід набереться: якщо станцію на той час
+// відвернуть, рахувати назад не буде з чого
+private _mid = _arc select (((round ((_tIn + _need) / CBR_ARC_DT)) max 0) min ((count _arc) - 1));
+
 [{
-    params ["_radar", "_pos", "_cal", "_speed", "_fireAz", "_base", "_arc", "_t0"];
+    params ["_radar", "_pos", "_cal", "_speed", "_fireAz", "_base", "_mid"];
     if (isNull _radar) exitWith {};
+
+    // сектор питається аж ТУТ: за час супроводу оператор міг довернути
+    // станцію, і тоді засічки не буде — вести стало нічим
+    private _sector = _radar getVariable ["cbr_sector", CBR_SECTOR];
+    private _seen = true;
+    if (_sector < 360) then {
+        private _d = _mid vectorDiff (getPosASL _radar);
+        private _az = (_d select 0) atan2 (_d select 1);
+        private _bear = _radar getVariable ["cbr_bearing", getDir _radar];
+        _seen = abs (((_az - _bear + 540) mod 360) - 180) <= _sector / 2;
+    };
+    if (!_seen) exitWith {};
 
     /*
         Журнал живе на самій станції й публічний: його бачить будь-хто
@@ -116,18 +160,4 @@ private _base = ((getPosASL _radar) distance _pos) * _sigma;
     };
 
     _radar setVariable ["cbr_acq", _log, true];
-
-    /*
-        Снаряд у польоті. Дуга вже прорахована, тож індикатору лишається
-        підставити час: станція показує сам снаряд, а не здогад, куди
-        він упаде.
-
-        Відлітали своє прибираються тут же, за новим пострілом, — щоб
-        не заводити окремий цикл на прибирання.
-    */
-    private _live = (_radar getVariable ["cbr_flight", []]) select {
-        (time - (_x select 0)) < (((count (_x select 1)) - 1) * CBR_ARC_DT)
-    };
-    _live pushBack [_t0, _arc, _cal];
-    _radar setVariable ["cbr_flight", _live, true];
-}, [_radar, _pos, _cal, _speed, _fireAz, _base, _arc, _t0], _radar getVariable ["cbr_delay", CBR_DELAY]] call CBA_fnc_waitAndExecute;
+}, [_radar, _pos, _cal, _speed, _fireAz, _base, _mid], _wait max 0] call CBA_fnc_waitAndExecute;

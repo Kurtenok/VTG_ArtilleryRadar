@@ -106,13 +106,18 @@ addMissionEventHandler ["ProjectileCreated", {
     if (!local _src) exitWith {};
 
     /*
-        Кому летить доповідь, вирішується ТУТ — по числах, які й так
-        публічні. Це саме ГРУБИЙ відсів, щоб не гнати мережею постріли
-        з іншого кінця карти: чи справді станція бачила снаряд, вирішує
-        вже вона сама, прорахувавши дугу й рельєф.
+        Кому летить доповідь. Це ГРУБИЙ відсів, щоб не гнати мережею
+        постріли з іншого кінця карти: чи бачила станція снаряд, вона
+        вирішує сама, прорахувавши дугу.
+
+        Дальність до ЗНАРЯДДЯ тут не годиться: батарея може стояти поза
+        зоною, а снаряди залітати в неї. Тому межа рахується по тому,
+        куди снаряд узагалі здатен долетіти, — а це не більше за v²/g,
+        і далі за цю суму станції нема чого чекати.
     */
     private _pos = getPosASL _proj;
     private _side = side _src;
+    private _reach = _speed * _speed / 9.81;
     private _to = [];
 
     {
@@ -121,7 +126,7 @@ addMissionEventHandler ["ProjectileCreated", {
         // свій вогонь станція теж бачить, доповідати про нього нема сенсу
         if (([_radar] call cbr_fnc_side) getFriend _side >= 0.6) then { continue };
 
-        if ((getPosASL _radar) distance _pos > (_radar getVariable ["cbr_range", CBR_RANGE])) then { continue };
+        if ((getPosASL _radar) distance _pos > (_radar getVariable ["cbr_range", CBR_RANGE]) + _reach) then { continue };
 
         _to pushBack [_radar, _op];
     } forEach cbr_active;

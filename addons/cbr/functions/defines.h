@@ -55,11 +55,10 @@
 
     Дуга рахується один раз, при захопленні, а далі положення береться
     з неї за часом: мережею не ганяється нічого, і кадр коштує одного
-    множення.
+    множення. Показується лише те, що зараз у промені.
 */
 #define CBR_SIM_DT 0.25      // найбільший крок інтегрування дуги, с
 #define CBR_SIM_STEPS 2000
-#define CBR_TRAIL 8          // хвіст пройденого шляху за снарядом, с
 
 /*
     Та сама вогнева позиція — це не лише «поруч», а й той самий снаряд.
@@ -76,9 +75,7 @@
 #define CBR_MIN_SPEED 40     // повільніше — не балістична ціль
 
 #define CBR_MARKER_TYPE "mil_triangle"
-// Блип летючого снаряда — процедурною текстурою: жодного файлу, а
-// колір задає сам виклик малювання
-#define CBR_ICO_SHELL "#(argb,8,8,3)color(1,1,1,1)"
+#define CBR_ICO_SHELL "\A3\ui_f\data\map\markers\military\dot_CA.paa"
 #define CBR_ICO_FIX "\A3\ui_f\data\map\markers\military\triangle_CA.paa"
 
 // Чат, радіо й позначки мають спільну нумерацію каналів (Channel IDs)
@@ -128,6 +125,6 @@
 // Ділення на getResolution#5 знімає вплив розміру інтерфейсу гравця
 #define CBR_UI_COEF (getResolution select 5)
 #define CBR_ICON_SIZE (0.034 / CBR_UI_COEF)
-#define CBR_SHELL_SIZE (0.012 / CBR_UI_COEF)
+#define CBR_SHELL_SIZE (0.022 / CBR_UI_COEF)
 #define CBR_TEXT_SIZE (0.028 / CBR_UI_COEF)
 #define CBR_RING_TEXT (0.022 / CBR_UI_COEF)

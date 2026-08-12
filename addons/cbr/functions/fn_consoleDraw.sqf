@@ -164,38 +164,41 @@ private _now = time;
 } forEach (uiNamespace getVariable ["cbr_log", []]);
 
 /*
-    Снаряди в польоті. Дуга прорахована ще при захопленні, тож кадр
-    коштує підстановки часу — ані запитів, ані мережі.
+    Снаряди в польоті — крапкою, без хвоста. Дуга прорахована ще при
+    захопленні, тож кадр коштує підстановки часу.
 
-    Хвіст іде від поточної точки НАЗАД і навмисно короткий: земна
-    проекція дуги пряма, і слід від самого дула видав би вогневу
-    точніше, ніж коло невизначеності.
+    Малюється РІВНО той проміжок, поки снаряд у промені: увійшов —
+    з'явився, вийшов — зник. За спиною станції він не тягнеться, бо
+    там його вже ніхто не веде.
+
+    Сектор при цьому питається ЗАРАЗ, а не береться з моменту
+    захоплення: оператор міг довернути станцію, а вести те, на що вона
+    більше не дивиться, вона не може.
 */
 private _fmtCal = localize "STR_cbr_track";
 private _fmtNo = localize "STR_cbr_track_nocal";
 
 {
-    _x params ["_t0", "_arc", "_cal"];
+    _x params ["_t0", "_arc", "_cal", "_tIn", "_tOut"];
 
-    private _last = (count _arc) - 1;
-    private _t = (_now - _t0) / CBR_ARC_DT;
-    if (_last < 1 || {_t < 0} || {_t >= _last}) then { continue };
+    private _t = _now - _t0;
+    if (_t < _tIn || {_t > _tOut}) then { continue };
 
     // положення за часом: відліки дуги рівні, тож досить підстановки
-    private _fnc_arcAt = {
-        private _u = _this max 0 min _last;
-        private _i = floor _u;
-        private _a = _arc select _i;
-        if (_i >= _last) exitWith { +_a };
-
-        _a vectorAdd (((_arc select (_i + 1)) vectorDiff _a) vectorMultiply (_u - _i))
+    private _last = (count _arc) - 1;
+    private _u = ((_t / CBR_ARC_DT) max 0) min _last;
+    private _i = floor _u;
+    private _at = _arc select _i;
+    if (_i < _last) then {
+        _at = _at vectorAdd (((_arc select (_i + 1)) vectorDiff _at) vectorMultiply (_u - _i));
     };
 
-    private _at = _t call _fnc_arcAt;
-    _map drawLine [(_t - CBR_TRAIL / CBR_ARC_DT) call _fnc_arcAt, _at, CBR_COL_DIM];
+    if (_sector < 360) then {
+        private _az = ((_at select 0) - (_pos select 0)) atan2 ((_at select 1) - (_pos select 1));
+        if (abs (((_az - _bearing + 540) mod 360) - 180) > _half) then { continue };
+    };
 
     // швидкість дають самі відліки дуги: вони рівні за часом
-    private _i = floor _t;
     private _v = round (((_arc select ((_i + 1) min _last)) distance (_arc select _i)) / CBR_ARC_DT);
     private _h = round (_at select 2);
 
