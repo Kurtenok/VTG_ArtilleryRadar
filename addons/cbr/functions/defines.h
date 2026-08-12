@@ -25,12 +25,23 @@
 #define CBR_ERROR_SHOTS 5
 
 #define CBR_DELAY 5          // супровід ділянки дуги до появи засічки, с
+
+// Точка падіння. Похибка більша за похибку самої вогневої: назад
+// станція рахує по відомій дузі, вперед — по ще не пройденій
+#define CBR_IMPACT_ERR 1.5
+#define CBR_IMPACT_LIFE 30   // скільки прильот тримається на індикаторі, с
+#define CBR_IMPACT_MAX 16    // стеля списку прильотів однієї вогневої
+#define CBR_IMPACT_DT 0.25   // крок інтегрування траєкторії, с
+#define CBR_IMPACT_STEPS 1200
+
 #define CBR_MERGE 250        // ближчі засічки — та сама вогнева позиція, м
 #define CBR_ACQ_LIFE 900     // скільки засічка живе в журналі станції, с
 #define CBR_ACQ_MAX 24       // глибина журналу: старіші витісняються
 #define CBR_MIN_SPEED 40     // повільніше — не балістична ціль
 
 #define CBR_MARKER_TYPE "mil_triangle"
+#define CBR_ICO_FIX "\A3\ui_f\data\map\markers\military\triangle_CA.paa"
+#define CBR_ICO_IMPACT "\A3\ui_f\data\map\markers\military\destroy_CA.paa"
 
 // Чат, радіо й позначки мають спільну нумерацію каналів (Channel IDs)
 #define CBR_CHAN_SIDE 1

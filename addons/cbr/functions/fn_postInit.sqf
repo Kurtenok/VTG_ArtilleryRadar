@@ -76,6 +76,6 @@ addMissionEventHandler ["ProjectileCreated", {
     // каже, КОГО накривають, чого з самої позиції не видно
     private _az = (_vel select 0) atan2 (_vel select 1);
 
-    [_pos, [_type] call cbr_fnc_caliber, round _speed, (round _az + 360) mod 360, side _src]
+    [_pos, _vel, _type, round _speed, (round _az + 360) mod 360, side _src]
         remoteExec ["cbr_fnc_detect", 2];
 }];

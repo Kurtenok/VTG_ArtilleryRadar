@@ -138,6 +138,7 @@ class CfgFunctions {
             class erase {};
             class initModule {};
             class hhmm {};
+            class impact {};
             class mark {};
             class preInit { preInit = 1; };
             class postInit { postInit = 1; };

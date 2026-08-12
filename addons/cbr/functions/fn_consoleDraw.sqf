@@ -106,7 +106,10 @@ private _labels = uiNamespace getVariable ["cbr_labels", []];
 private _now = time;
 
 {
-    _x params ["_id", "_p", "_cal", "_speed", "_at", "_rounds", ["_err", 0], ["_fireAz", 0], ["_when", 0]];
+    _x params [
+        "_id", "_p", "_cal", "_speed", "_at", "_rounds",
+        ["_err", 0], ["_fireAz", 0], ["_when", 0], ["_hits", []]
+    ];
 
     private _age = _now - _at;
     private _col = [CBR_COL_FIX, CBR_COL_SEL] select (_forEachIndex == _sel);
@@ -118,15 +121,32 @@ private _now = time;
     };
 
     /*
-        Куди било знаряддя: короткий вектор від засічки за азимутом
-        стрільби. Каже, КОГО накривають, — з самої позиції цього не видно
+        Прильоти: лінія до кожного показує і напрямок, і дальність вогню.
+        Старі тьмяніють із віком — так видно, куди батарея переносить
+        вогонь. Квадрат підписаний лише в найсвіжішого, решта фон.
     */
-    private _len = (_err * 1.5) max 300;
-    _map drawLine [
-        _p,
-        [(_p select 0) + _len * sin _fireAz, (_p select 1) + _len * cos _fireAz],
-        _col
-    ];
+    private _last = (count _hits) - 1;
+    {
+        _x params ["_hp", "_he", "_ht"];
+
+        private _left = 1 - ((_now - _ht) / CBR_IMPACT_LIFE);
+        if (_left <= 0) then { continue };
+
+        private _hc = [
+            _col select 0, _col select 1, _col select 2,
+            (_col select 3) * (0.2 + 0.8 * _left)
+        ];
+
+        _map drawLine [_p, _hp, _hc];
+        if (_he > 0) then { _map drawEllipse [_hp, _he, _he, 0, _hc, ""] };
+
+        _map drawIcon [
+            CBR_ICO_IMPACT, _hc,
+            _hp, CBR_ICON_SIZE, CBR_ICON_SIZE, 0,
+            ["", mapGridPosition _hp] select (_forEachIndex == _last),
+            0, CBR_TEXT_SIZE, "RobotoCondensed"
+        ];
+    } forEach _hits;
 
     // підпис зібрано в оновленні журналу: він міняється подіями, а не
     // щокадру, і складати його по два десятки разів на кадр нема сенсу
@@ -154,7 +174,7 @@ private _now = time;
 
     private _size = CBR_ICON_SIZE * (1 + _pop);
     _map drawIcon [
-        "\A3\ui_f\data\map\markers\military\triangle_CA.paa", _col,
+        CBR_ICO_FIX, _col,
         _p, _size, _size, 0,
         _label, 0, CBR_TEXT_SIZE, "RobotoCondensed"
     ];
