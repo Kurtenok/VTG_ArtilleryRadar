@@ -2,36 +2,62 @@
 
 /*
     Function: cbr_fnc_impact
-    Куди впаде снаряд: точка ASL або [], якщо рахувати нема сенсу.
+    Точка падіння снаряда (ASL) або [], якщо він не приземлився в межах
+    ліміту кроків.
 
-    Рахується ЧИСТА балістика, без опору повітря — і це не спрощення.
-    Артилерія, міномети й реактивні снаряди в Армі летять із
-    airFriction = 0, тобто рівно по параболі, тож для всього, що радар
-    узагалі бачить, розрахунок точний.
+    Опір повітря в Армі рахується ДВОМА різними законами, і знак
+    airFriction каже, яким саме:
+        k < 0   снаряди й кулі:   a = k * |v| * v   (квадратичний)
+        k > 0   ракети й бомби:   a = -k * v        (лінійний)
 
-    Боєприпасу з ненульовим опором точку падіння НЕ показуємо. Модель
-    польоту в нього інша, передбачити її цією формулою не можна, а
-    показати навмання гірше, ніж не показати: оператор повірить числу.
-    Сама вогнева позиція від цього не залежить і лишається.
+    Переплутати не можна: 0.45 у ПГ-9В за квадратичним законом дає
+    220 000 м/с2, і рахунок за два кроки йде в нескінченність — саме
+    цим і падала стрільба зі СПГ-9. Знак перевірено по всіх класах
+    боєприпасів гри й RHS: винятків немає.
 
-    Крок точний для сталого прискорення, тож дрібнити його нема сенсу.
+    Двигун тут не моделюється: клієнт знімає стан снаряда вже після
+    вигоряння, тож сюди приходить вільний політ.
 */
 
 params ["_pos", "_vel", "_ammo"];
 
-private _drag = missionNamespace getVariable "cbr_dragCache";
-if (isNil "_drag") then {
-    _drag = createHashMap;
-    missionNamespace setVariable ["cbr_dragCache", _drag];
+private _cache = missionNamespace getVariable "cbr_ballistics";
+if (isNil "_cache") then {
+    _cache = createHashMap;
+    missionNamespace setVariable ["cbr_ballistics", _cache];
 };
 
-private _k = _drag get _ammo;
-if (isNil "_k") then {
-    _k = getNumber (configFile >> "CfgAmmo" >> _ammo >> "airFriction");
-    _drag set [_ammo, _k];
+private _data = _cache get _ammo;
+if (isNil "_data") then {
+    private _cfg = configFile >> "CfgAmmo" >> _ammo;
+    private _k = getNumber (_cfg >> "airFriction");
+
+    // трапляється в одиниць боєприпасів, але мовчки міняє всю дугу
+    private _cg = 1;
+    if (isNumber (_cfg >> "coefGravity")) then { _cg = getNumber (_cfg >> "coefGravity") };
+
+    _data = [abs _k, _k < 0, -9.81 * _cg];
+    _cache set [_ammo, _data];
+};
+_data params ["_drag", "_quad", "_g"];
+
+private _fnc_acc = {
+    private _s = vectorMagnitude _this;
+    private _f = -_drag * ([1, _s] select _quad);
+    [(_this select 0) * _f, (_this select 1) * _f, (_this select 2) * _f + _g]
 };
 
-if (_k != 0) exitWith { [] };
+/*
+    Крок міряється силою опору: за один крок швидкість не має падати
+    більш ніж на два відсотки, інакше дуга зрізається. Без опору крок
+    максимальний — там рахунок точний за будь-якого.
+*/
+private _dt = CBR_IMPACT_DT;
+private _s0 = vectorMagnitude _vel;
+if (_drag > 0 && {_s0 > 0}) then {
+    private _a0 = _drag * _s0 * ([1, _s0] select _quad);
+    _dt = ((0.02 * _s0 / _a0) max 0.01) min CBR_IMPACT_DT;
+};
 
 private _p = +_pos;
 private _v = +_vel;
@@ -39,24 +65,29 @@ private _hit = [];
 private _steps = 0;
 
 // умова в самому циклі, а не exitWith усередині: той вийшов би лише з
-// ітерації, і снаряд «падав» би далі під землю всі решту кроків
+// ітерації, і снаряд «падав» би далі під землю решту кроків
 while { _hit isEqualTo [] && {_steps < CBR_IMPACT_STEPS} } do {
     _steps = _steps + 1;
 
-    private _next = _p
-        vectorAdd (_v vectorMultiply CBR_IMPACT_DT)
-        vectorAdd ([0, 0, -9.81 * 0.5 * CBR_IMPACT_DT * CBR_IMPACT_DT]);
+    // прискорення береться в СЕРЕДИНІ кроку: на прямому Ейлері дуга
+    // 120-мм снаряда їде на півсотні метрів, так — на півметра
+    private _a = _v call _fnc_acc;
+    private _am = (_v vectorAdd (_a vectorMultiply (_dt * 0.5))) call _fnc_acc;
 
-    private _ground = getTerrainHeightASL [_next select 0, _next select 1];
+    private _next = _p
+        vectorAdd (_v vectorMultiply _dt)
+        vectorAdd (_am vectorMultiply (0.5 * _dt * _dt));
+
+    // над водою рельєф іде під нуль, а снаряд рветься об поверхню
+    private _ground = (getTerrainHeightASL [_next select 0, _next select 1]) max 0;
     if ((_next select 2) <= _ground) then {
-        // уточнюємо точку падіння лінійно всередині останнього кроку
         private _drop = (_p select 2) - (_next select 2);
         private _f = 0;
         if (_drop > 0.001) then { _f = (((_p select 2) - _ground) / _drop) max 0 min 1 };
 
         _hit = _p vectorAdd ((_next vectorDiff _p) vectorMultiply _f);
     } else {
-        _v set [2, (_v select 2) - 9.81 * CBR_IMPACT_DT];
+        _v = _v vectorAdd (_am vectorMultiply _dt);
         _p = _next;
     };
 };

@@ -31,8 +31,8 @@
 #define CBR_IMPACT_ERR 1.5
 #define CBR_IMPACT_LIFE 30   // скільки прильот тримається на індикаторі, с
 #define CBR_IMPACT_MAX 16    // стеля списку прильотів однієї вогневої
-#define CBR_IMPACT_DT 0.25   // крок інтегрування траєкторії, с
-#define CBR_IMPACT_STEPS 1200
+#define CBR_IMPACT_DT 0.25   // найбільший крок інтегрування дуги, с
+#define CBR_IMPACT_STEPS 2000
 
 #define CBR_MERGE 250        // ближчі засічки — та сама вогнева позиція, м
 #define CBR_ACQ_LIFE 900     // скільки засічка живе в журналі станції, с

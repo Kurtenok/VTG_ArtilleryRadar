@@ -10,12 +10,15 @@
     немає. Тому він і працює по цілях за хребтом.
 */
 
-params ["_pos", "_vel", "_ammo", "_speed", "_fireAz", "_side"];
+// _pos це дуло — з нього рахується вогнева; _track це знятий стан
+// снаряда на вільній ділянці дуги, з нього рахується точка падіння
+params ["_pos", "_track", "_ammo", "_speed", "_fireAz", "_side"];
 
 private _cal = [_ammo] call cbr_fnc_caliber;
 
 // точка падіння одна на постріл, скільки б станцій його не бачило
-private _impact = [_pos, _vel, _ammo] call cbr_fnc_impact;
+_track params ["_tPos", "_tVel"];
+private _impact = [_tPos, _tVel, _ammo] call cbr_fnc_impact;
 
 // журнал у кожної станції свій; карти засічка не чіпає, поки оператор
 // не виведе її сам

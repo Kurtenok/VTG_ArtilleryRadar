@@ -70,12 +70,43 @@ addMissionEventHandler ["ProjectileCreated", {
     if (!local _src) exitWith {};
 
     // на карту йдуть ЗАМІРИ, а не здогад про тип знаряддя: калібр і
-    // дульна швидкість, а вже що це за система — справа розрахунку
-    // азимут пострілу: куди саме било знаряддя. Станція рахує і точку
-    // старту, і точку падіння, тож напрямок стрільби вона знає — а він
-    // каже, КОГО накривають, чого з самої позиції не видно
+    // дульна швидкість, а вже що це за система — справа розрахунку.
+    // Азимут пострілу каже, КОГО накривають, чого з самої позиції не видно
     private _az = (_vel select 0) atan2 (_vel select 1);
+    private _fireAz = (round _az + 360) mod 360;
 
-    [_pos, _vel, _type, round _speed, (round _az + 360) mod 360, side _src]
-        remoteExec ["cbr_fnc_detect", 2];
+    /*
+        Реактивний снаряд рахувати від дула не можна: доки працює
+        двигун, дуга не балістична, а напрямок тяги йде за корпусом і
+        зі сторони не відтворюється. Тому чекаємо вигоряння й знімаємо
+        стан із самого снаряда — далі він летить уже вільно.
+
+        Тяга є в одиниць боєприпасів; артилерія й міномети йдуть без
+        затримки тим самим рядком, що й раніше.
+    */
+    private _cfg = configFile >> "CfgAmmo" >> _type;
+    private _burn = 0;
+    if (getNumber (_cfg >> "thrust") > 0) then {
+        _burn = getNumber (_cfg >> "initTime") + getNumber (_cfg >> "thrustTime");
+    };
+
+    if (_burn <= 0) exitWith {
+        [_pos, [_pos, _vel], _type, round _speed, _fireAz, side _src]
+            remoteExec ["cbr_fnc_detect", 2];
+    };
+
+    [{
+        params ["_proj", "_pos", "_type", "_fireAz", "_side"];
+
+        // не дотягнув до вигоряння: станція не встигла зняти дугу й
+        // рахувати їй нема з чого
+        if (isNull _proj) exitWith {};
+
+        // швидкість беремо тут, а не з дула: у реактивного вона на
+        // старті ще не набрана, і в доповідь пішло б заниження
+        private _vel = velocity _proj;
+
+        [_pos, [getPosASL _proj, _vel], _type, round (vectorMagnitude _vel), _fireAz, _side]
+            remoteExec ["cbr_fnc_detect", 2];
+    }, [_proj, _pos, _type, _fireAz, side _src], _burn] call CBA_fnc_waitAndExecute;
 }];
