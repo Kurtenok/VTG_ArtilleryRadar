@@ -108,7 +108,7 @@ private _now = time;
 {
     _x params [
         "_id", "_p", "_cal", "_speed", "_at", "_rounds",
-        ["_err", 0], ["_fireAz", 0], ["_when", 0], ["_hits", []]
+        ["_err", 0], ["_fireAz", 0], ["_when", 0]
     ];
 
     private _age = _now - _at;
@@ -121,32 +121,15 @@ private _now = time;
     };
 
     /*
-        Прильоти: лінія до кожного показує і напрямок, і дальність вогню.
-        Старі тьмяніють із віком — так видно, куди батарея переносить
-        вогонь. Квадрат підписаний лише в найсвіжішого, решта фон.
+        Куди било знаряддя: короткий вектор від засічки за азимутом
+        стрільби. Каже, КОГО накривають, — з самої позиції цього не видно
     */
-    private _last = (count _hits) - 1;
-    {
-        _x params ["_hp", "_he", "_ht"];
-
-        private _left = 1 - ((_now - _ht) / CBR_IMPACT_LIFE);
-        if (_left <= 0) then { continue };
-
-        private _hc = [
-            _col select 0, _col select 1, _col select 2,
-            (_col select 3) * (0.2 + 0.8 * _left)
-        ];
-
-        _map drawLine [_p, _hp, _hc];
-        if (_he > 0) then { _map drawEllipse [_hp, _he, _he, 0, _hc, ""] };
-
-        _map drawIcon [
-            CBR_ICO_IMPACT, _hc,
-            _hp, CBR_ICON_SIZE, CBR_ICON_SIZE, 0,
-            ["", mapGridPosition _hp] select (_forEachIndex == _last),
-            0, CBR_TEXT_SIZE, "RobotoCondensed"
-        ];
-    } forEach _hits;
+    private _len = (_err * 1.5) max 300;
+    _map drawLine [
+        _p,
+        [(_p select 0) + _len * sin _fireAz, (_p select 1) + _len * cos _fireAz],
+        _col
+    ];
 
     // підпис зібрано в оновленні журналу: він міняється подіями, а не
     // щокадру, і складати його по два десятки разів на кадр нема сенсу
@@ -179,3 +162,47 @@ private _now = time;
         _label, 0, CBR_TEXT_SIZE, "RobotoCondensed"
     ];
 } forEach (uiNamespace getVariable ["cbr_log", []]);
+
+/*
+    Снаряди в польоті. Дуга прорахована ще при захопленні, тож кадр
+    коштує підстановки часу — ані запитів, ані мережі.
+
+    Хвіст іде від поточної точки НАЗАД і навмисно короткий: земна
+    проекція дуги пряма, і слід від самого дула видав би вогневу
+    точніше, ніж коло невизначеності.
+*/
+private _fmtCal = localize "STR_cbr_track";
+private _fmtNo = localize "STR_cbr_track_nocal";
+
+{
+    _x params ["_t0", "_arc", "_cal"];
+
+    private _last = (count _arc) - 1;
+    private _t = (_now - _t0) / CBR_ARC_DT;
+    if (_last < 1 || {_t < 0} || {_t >= _last}) then { continue };
+
+    // положення за часом: відліки дуги рівні, тож досить підстановки
+    private _fnc_arcAt = {
+        private _u = _this max 0 min _last;
+        private _i = floor _u;
+        private _a = _arc select _i;
+        if (_i >= _last) exitWith { +_a };
+
+        _a vectorAdd (((_arc select (_i + 1)) vectorDiff _a) vectorMultiply (_u - _i))
+    };
+
+    private _at = _t call _fnc_arcAt;
+    _map drawLine [(_t - CBR_TRAIL / CBR_ARC_DT) call _fnc_arcAt, _at, CBR_COL_DIM];
+
+    // швидкість дають самі відліки дуги: вони рівні за часом
+    private _i = floor _t;
+    private _v = round (((_arc select ((_i + 1) min _last)) distance (_arc select _i)) / CBR_ARC_DT);
+    private _h = round (_at select 2);
+
+    _map drawIcon [
+        CBR_ICO_SHELL, CBR_COL_MAIN,
+        _at, CBR_SHELL_SIZE, CBR_SHELL_SIZE, 0,
+        [format [_fmtNo, _v, _h], format [_fmtCal, _cal, _v, _h]] select (_cal > 0),
+        0, CBR_TEXT_SIZE, "RobotoCondensed"
+    ];
+} forEach (_veh getVariable ["cbr_flight", []]);

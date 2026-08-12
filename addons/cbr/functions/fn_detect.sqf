@@ -5,8 +5,8 @@
     Постріл по ОДНІЙ станції, на машині її оператора.
 
     Рахує той, хто станцією користується: сервер із цього не робить
-    нічого. Важке тут одне — зворотна екстраполяція й точка падіння, і
-    лягає воно рівно на того, хто дивиться на індикатор.
+    нічого. Важке тут одне — прорахунок дуги, і лягає воно рівно на
+    того, хто дивиться на індикатор.
 
     Сторону й грубу дальність уже перевірила машина стрільця; сектор і
     рельєф перевіряються тут, бо для них треба прорахувати дугу.
@@ -14,34 +14,17 @@
 
 // _pos це дуло — з нього рахується вогнева; _track це знятий стан
 // снаряда на вільній ділянці дуги, з нього рахується сама дуга
-params ["_radar", "_pos", "_track", "_ammo", "_speed", "_fireAz"];
+params ["_radar", "_pos", "_track", "_ammo", "_speed", "_fireAz", "_t0"];
 if (isNull _radar) exitWith {};
 
 _track params ["_tPos", "_tVel"];
-([_tPos, _tVel, _ammo] call cbr_fnc_arc) params ["_impact", "_arc"];
+private _arc = [_tPos, _tVel, _ammo] call cbr_fnc_arc;
 
 // станція реєструє снаряд, а не знаряддя: якщо дуга не показалась
 // з-за рельєфу, не піднялась над променем або не зайшла в сектор —
 // пострілу для неї не було
 private _got = [_radar, _arc] call cbr_fnc_acquire;
 if (_got isEqualTo []) exitWith {};
-
-/*
-    Як високо взяли снаряд — часткою від вершини дуги. Саме вершина
-    задає форму траєкторії: узяв біля неї — знаєш, куди впаде; узяв
-    низько на підйомі — попереду вся дуга.
-
-    Настильний постріл вершини не має, тож там частка одиниця: гіршати
-    прогнозу нема від чого.
-*/
-private _h0 = (_arc select 0) select 2;
-private _apex = _h0;
-{ if ((_x select 2) > _apex) then { _apex = _x select 2 } } forEach _arc;
-
-private _rel = 1;
-if (_apex - _h0 > 1) then {
-    _rel = ((((_got select 0) select 2) - _h0) / (_apex - _h0)) max 0 min 1;
-};
 
 private _cal = [_ammo] call cbr_fnc_caliber;
 
@@ -51,26 +34,11 @@ private _sigma = _radar getVariable ["cbr_error", CBR_ERROR];
 private _base = ((getPosASL _radar) distance _pos) * _sigma;
 
 /*
-    Похибка точки падіння. Базу дає дальність ЗАХОПЛЕННЯ, а не відстань
-    до самої точки: міряє станція снаряд там, де взяла його, і кутова
-    помилка росте саме з тієї дальності. Точка падіння лежить де
-    завгодно, часто далеко за зоною станції, і рахувати по ній — рахувати
-    по дальності, на якій нічого не мірялось.
-
-    Множник — висота захоплення: скільки дуги лишилось екстраполювати.
-*/
-private _hitErr = 0;
-if (_impact isNotEqualTo []) then {
-    _hitErr = ((getPosASL _radar) distance (_got select 0)) * _sigma
-        * CBR_IMPACT_ERR * (1 + CBR_IMPACT_LOW * (1 - _rel));
-};
-
-/*
     Засічка лягає в журнал не миттєво: станції треба відстежити
     ділянку дуги, перш ніж рахувати назад. Затримка — за модулем.
 */
 [{
-    params ["_radar", "_pos", "_cal", "_speed", "_fireAz", "_base", "_impact", "_hitErr"];
+    params ["_radar", "_pos", "_cal", "_speed", "_fireAz", "_base", "_arc", "_t0"];
     if (isNull _radar) exitWith {};
 
     /*
@@ -119,20 +87,6 @@ if (_impact isNotEqualTo []) then {
 
     private _fix = [_pos, _err] call _fnc_blur;
 
-    // прильоти НАКОПИЧУЮТЬСЯ: по кількох розривах видно всю смугу,
-    // яку накриває батарея, а не лише останній снаряд
-    private _hits = [];
-    if (_idx > -1) then {
-        private _fresh = time - CBR_IMPACT_LIFE;
-        _hits = ((_log select _idx) param [9, []]) select { (_x select 2) > _fresh };
-    };
-
-    // сама точка зміщена всередині свого кола так само, як і вогнева
-    if (_impact isNotEqualTo []) then {
-        _hits pushBack [[_impact, _hitErr] call _fnc_blur, _hitErr, time];
-        if (count _hits > CBR_IMPACT_MAX) then { _hits deleteAt 0 };
-    };
-
     if (_idx > -1) then {
         // Заміри йдуть від СВІЖОГО пострілу. Калібр у записі вже той
         // самий, а от азимут змінюється, коли батарея переносить
@@ -144,7 +98,6 @@ if (_impact isNotEqualTo []) then {
         _acq set [5, _rounds];
         _acq set [6, _err];      // і звужене коло
         _acq set [7, _fireAz];
-        _acq set [9, _hits];
     } else {
         private _n = (_radar getVariable ["cbr_acqId", 0]) + 1;
         _radar setVariable ["cbr_acqId", _n];
@@ -152,15 +105,29 @@ if (_impact isNotEqualTo []) then {
         /*
             [0 номер, 1 точка, 2 калібр, 3 швидкість, 4 час місії,
              5 пострілів, 6 радіус невизначеності, 7 азимут стрільби,
-             8 час доби, 9 прильоти]
+             8 час доби]
 
             Час доби окремо від часу місії: перший потрібен оператору
             на екрані, другий — для віку засічки. Вивести один з
             одного не можна, бо прискорення часу розводить їх.
         */
-        _log pushBack [_n, _fix, _cal, _speed, time, 1, _err, _fireAz, daytime, _hits];
+        _log pushBack [_n, _fix, _cal, _speed, time, 1, _err, _fireAz, daytime];
         if (count _log > CBR_ACQ_MAX) then { _log deleteAt 0 };
     };
 
     _radar setVariable ["cbr_acq", _log, true];
-}, [_radar, _pos, _cal, _speed, _fireAz, _base, _impact, _hitErr], _radar getVariable ["cbr_delay", CBR_DELAY]] call CBA_fnc_waitAndExecute;
+
+    /*
+        Снаряд у польоті. Дуга вже прорахована, тож індикатору лишається
+        підставити час: станція показує сам снаряд, а не здогад, куди
+        він упаде.
+
+        Відлітали своє прибираються тут же, за новим пострілом, — щоб
+        не заводити окремий цикл на прибирання.
+    */
+    private _live = (_radar getVariable ["cbr_flight", []]) select {
+        (time - (_x select 0)) < (((count (_x select 1)) - 1) * CBR_ARC_DT)
+    };
+    _live pushBack [_t0, _arc, _cal];
+    _radar setVariable ["cbr_flight", _live, true];
+}, [_radar, _pos, _cal, _speed, _fireAz, _base, _arc, _t0], _radar getVariable ["cbr_delay", CBR_DELAY]] call CBA_fnc_waitAndExecute;

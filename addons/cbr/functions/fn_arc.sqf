@@ -2,14 +2,11 @@
 
 /*
     Function: cbr_fnc_arc
-    Прораховує дугу снаряда: [точка падіння ASL, точки дуги].
+    Прораховує дугу снаряда: точки через CBR_ARC_DT секунд польоту.
 
-    Точка падіння порожня, якщо снаряд не приземлився в межах ліміту
-    кроків. Точки дуги йдуть через CBR_ARC_DT секунд польоту — по них
-    станція вирішує, чи бачила вона цей постріл узагалі.
-
-    Рахунок один на обидві відповіді: інтегрувати ту саму дугу двічі
-    нема сенсу.
+    По ній станція вирішує і чи бачила вона постріл узагалі, і де
+    снаряд зараз — рівний крок за часом дає положення простою
+    підстановкою, без жодного повторного інтегрування.
 
     Опір повітря в Армі рахується ДВОМА різними законами, і знак
     airFriction каже, яким саме:
@@ -59,26 +56,26 @@ private _fnc_acc = {
     більш ніж на два відсотки, інакше дуга зрізається. Без опору крок
     максимальний — там рахунок точний за будь-якого.
 */
-private _dt = CBR_IMPACT_DT;
+private _dt = CBR_SIM_DT;
 private _s0 = vectorMagnitude _vel;
 if (_drag > 0 && {_s0 > 0}) then {
     private _a0 = _drag * _s0;
     if (_quad) then { _a0 = _a0 * _s0 };
 
-    _dt = ((0.02 * _s0 / _a0) max 0.01) min CBR_IMPACT_DT;
+    _dt = ((0.02 * _s0 / _a0) max 0.01) min CBR_SIM_DT;
 };
 
 private _every = (round (CBR_ARC_DT / _dt)) max 1;
 
 private _p = +_pos;
 private _v = +_vel;
-private _hit = [];
 private _arc = [+_pos];
 private _steps = 0;
+private _down = false;
 
 // умова в самому циклі, а не exitWith усередині: той вийшов би лише з
 // ітерації, і снаряд «падав» би далі під землю решту кроків
-while { _hit isEqualTo [] && {_steps < CBR_IMPACT_STEPS} } do {
+while { !_down && {_steps < CBR_SIM_STEPS} } do {
     _steps = _steps + 1;
 
     // прискорення береться в СЕРЕДИНІ кроку: на прямому Ейлері дуга
@@ -93,11 +90,15 @@ while { _hit isEqualTo [] && {_steps < CBR_IMPACT_STEPS} } do {
     // над водою рельєф іде під нуль, а снаряд рветься об поверхню
     private _ground = (getTerrainHeightASL [_next select 0, _next select 1]) max 0;
     if ((_next select 2) <= _ground) then {
+        _down = true;
+
+        // останнім відліком іде сама земля, інакше блип на індикаторі
+        // гаснув би ще в повітрі, за крок до падіння
         private _drop = (_p select 2) - (_next select 2);
         private _f = 0;
         if (_drop > 0.001) then { _f = (((_p select 2) - _ground) / _drop) max 0 min 1 };
 
-        _hit = _p vectorAdd ((_next vectorDiff _p) vectorMultiply _f);
+        _arc pushBack (_p vectorAdd ((_next vectorDiff _p) vectorMultiply _f));
     } else {
         _v = _v vectorAdd (_am vectorMultiply _dt);
         _p = _next;
@@ -106,4 +107,4 @@ while { _hit isEqualTo [] && {_steps < CBR_IMPACT_STEPS} } do {
     };
 };
 
-[_hit, _arc]
+_arc

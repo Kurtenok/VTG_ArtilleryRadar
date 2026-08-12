@@ -76,6 +76,16 @@
             <Russian>Классы техники, которая по умолчанию несёт контрбатарейный радар; через запятую или пробел. Модуль, поставленный на машину, старше этого списка.</Russian>
             <Ukrainian>Класи техніки, що за замовчуванням несе контрбатарейний радар; через кому або пробіл. Модуль, поставлений на машину, старший за цей список.</Ukrainian>
         </Key>
+        <Key ID="STR_cbr_track">
+            <English>%1 mm  %2 m/s  %3 m</English>
+            <Russian>%1 мм  %2 м/с  %3 м</Russian>
+            <Ukrainian>%1 мм  %2 м/с  %3 м</Ukrainian>
+        </Key>
+        <Key ID="STR_cbr_track_nocal">
+            <English>%1 m/s  %2 m</English>
+            <Russian>%1 м/с  %2 м</Russian>
+            <Ukrainian>%1 м/с  %2 м</Ukrainian>
+        </Key>
         <Key ID="STR_cbr_ui_acq">
             <English>ACQUISITIONS</English>
             <Russian>ЗАСЕЧЕК</Russian>

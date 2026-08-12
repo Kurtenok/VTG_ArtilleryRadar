@@ -141,9 +141,9 @@ addMissionEventHandler ["ProjectileCreated", {
         params ["_proj", "_to", "_pos", "_vel", "_type", "_speed", "_fireAz"];
 
         /*
-            Замір після вигоряння лише УТОЧНЮЄ точку падіння. Сама
-            засічка від нього не залежить, тож якщо снаряд до цієї миті
-            не дожив, доповідь однаково йде — по дульних даних.
+            Замір після вигоряння лише УТОЧНЮЄ дугу. Сама засічка від
+            нього не залежить, тож якщо снаряд до цієї миті не дожив,
+            доповідь однаково йде — по дульних даних.
         */
         private _track = [_pos, _vel];
         if (!isNull _proj) then {
@@ -157,7 +157,8 @@ addMissionEventHandler ["ProjectileCreated", {
 
         {
             _x params ["_radar", "_op"];
-            [_radar, _pos, _track, _type, _speed, _fireAz] remoteExec ["cbr_fnc_detect", _op];
+            [_radar, _pos, _track, _type, _speed, _fireAz, time]
+                remoteExec ["cbr_fnc_detect", _op];
         } forEach _to;
     };
 
