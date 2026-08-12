@@ -21,21 +21,56 @@ _track params ["_tPos", "_tVel"];
 ([_tPos, _tVel, _ammo] call cbr_fnc_arc) params ["_impact", "_arc"];
 
 // станція реєструє снаряд, а не знаряддя: якщо дуга не показалась
-// з-за рельєфу або не зайшла в сектор — пострілу для неї не було
-if (!([_radar, _arc] call cbr_fnc_visible)) exitWith {};
+// з-за рельєфу, не піднялась над променем або не зайшла в сектор —
+// пострілу для неї не було
+private _got = [_radar, _arc] call cbr_fnc_acquire;
+if (_got isEqualTo []) exitWith {};
+
+/*
+    Як високо взяли снаряд — часткою від вершини дуги. Саме вершина
+    задає форму траєкторії: узяв біля неї — знаєш, куди впаде; узяв
+    низько на підйомі — попереду вся дуга.
+
+    Настильний постріл вершини не має, тож там частка одиниця: гіршати
+    прогнозу нема від чого.
+*/
+private _h0 = (_arc select 0) select 2;
+private _apex = _h0;
+{ if ((_x select 2) > _apex) then { _apex = _x select 2 } } forEach _arc;
+
+private _rel = 1;
+if (_apex - _h0 > 1) then {
+    _rel = ((((_got select 0) select 2) - _h0) / (_apex - _h0)) max 0 min 1;
+};
 
 private _cal = [_ammo] call cbr_fnc_caliber;
 
+private _sigma = _radar getVariable ["cbr_error", CBR_ERROR];
+
 // базова похибка зворотної екстраполяції на цій дальності
-private _dist = (getPosASL _radar) distance _pos;
-private _base = _dist * (_radar getVariable ["cbr_error", CBR_ERROR]);
+private _base = ((getPosASL _radar) distance _pos) * _sigma;
+
+/*
+    Похибка точки падіння. Базу дає дальність ЗАХОПЛЕННЯ, а не відстань
+    до самої точки: міряє станція снаряд там, де взяла його, і кутова
+    помилка росте саме з тієї дальності. Точка падіння лежить де
+    завгодно, часто далеко за зоною станції, і рахувати по ній — рахувати
+    по дальності, на якій нічого не мірялось.
+
+    Множник — висота захоплення: скільки дуги лишилось екстраполювати.
+*/
+private _hitErr = 0;
+if (_impact isNotEqualTo []) then {
+    _hitErr = ((getPosASL _radar) distance (_got select 0)) * _sigma
+        * CBR_IMPACT_ERR * (1 + CBR_IMPACT_LOW * (1 - _rel));
+};
 
 /*
     Засічка лягає в журнал не миттєво: станції треба відстежити
     ділянку дуги, перш ніж рахувати назад. Затримка — за модулем.
 */
 [{
-    params ["_radar", "_pos", "_cal", "_speed", "_fireAz", "_base", "_impact"];
+    params ["_radar", "_pos", "_cal", "_speed", "_fireAz", "_base", "_impact", "_hitErr"];
     if (isNull _radar) exitWith {};
 
     /*
@@ -92,15 +127,8 @@ private _base = _dist * (_radar getVariable ["cbr_error", CBR_ERROR]);
         _hits = ((_log select _idx) param [9, []]) select { (_x select 2) > _fresh };
     };
 
-    /*
-        Точка падіння розмивається окремо й сильніше: похибка та сама
-        кутова, але рахується до НЕЇ, а не до вогневої, і ще множиться,
-        бо шлях уперед станція не бачила.
-    */
+    // сама точка зміщена всередині свого кола так само, як і вогнева
     if (_impact isNotEqualTo []) then {
-        private _hitErr = ((getPosASL _radar) distance _impact)
-            * (_radar getVariable ["cbr_error", CBR_ERROR]) * CBR_IMPACT_ERR;
-
         _hits pushBack [[_impact, _hitErr] call _fnc_blur, _hitErr, time];
         if (count _hits > CBR_IMPACT_MAX) then { _hits deleteAt 0 };
     };
@@ -135,4 +163,4 @@ private _base = _dist * (_radar getVariable ["cbr_error", CBR_ERROR]);
     };
 
     _radar setVariable ["cbr_acq", _log, true];
-}, [_radar, _pos, _cal, _speed, _fireAz, _base, _impact], _radar getVariable ["cbr_delay", CBR_DELAY]] call CBA_fnc_waitAndExecute;
+}, [_radar, _pos, _cal, _speed, _fireAz, _base, _impact, _hitErr], _radar getVariable ["cbr_delay", CBR_DELAY]] call CBA_fnc_waitAndExecute;
