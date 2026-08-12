@@ -42,9 +42,9 @@
             <Ukrainian>Ширина сектора, який радар тримає під наглядом; відлік від носа машини, тож сектор наводиться її розворотом. 360 — круговий огляд. У реальних станцій 90.</Ukrainian>
         </Key>
         <Key ID="STR_cbr_cat">
-            <English>VTG Counter-battery radar</English>
-            <Russian>VTG Контрбатарейный радар</Russian>
-            <Ukrainian>VTG Контрбатарейний радар</Ukrainian>
+            <English>Counter-battery radar</English>
+            <Russian>Контрбатарейный радар</Russian>
+            <Ukrainian>Контрбатарейний радар</Ukrainian>
         </Key>
         <Key ID="STR_cbr_label">
             <English>%1 mm, %2 m/s</English>

@@ -2,7 +2,7 @@
 
 class CfgPatches {
     class vtgcbr_cbr {
-        name = "VTG Counter-battery radar";
+        name = "Counter-battery radar";
         units[] = {"cbr_module"};
         weapons[] = {};
         requiredVersion = 2.10;

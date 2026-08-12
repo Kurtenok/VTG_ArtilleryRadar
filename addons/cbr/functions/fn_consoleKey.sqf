@@ -13,6 +13,18 @@ if (isNull _veh) exitWith { false };
 
 private _log = uiNamespace getVariable ["cbr_log", []];
 private _sel = uiNamespace getVariable ["cbr_sel", 0];
+private _n = count _log;
+
+/*
+    Вибір іде по колу: з кінця списку крок уперед кидає на початок і
+    навпаки. Упиратися в край нема сенсу — засічок буває два десятки, і
+    потрібна частіше опиняється саме там, звідки щойно вийшов.
+*/
+private _fnc_step = {
+    params ["_delta"];
+    if (_n < 1) exitWith {};
+    uiNamespace setVariable ["cbr_sel", (_sel + _delta + _n) mod _n];
+};
 
 switch (_key) do {
     // A / D і стрілки — доворот сектора
@@ -23,13 +35,9 @@ switch (_key) do {
         [_veh, CBR_SLEW_STEP] call cbr_fnc_slew;
     };
 
-    // W / S і стрілки — вибір засічки
-    case 17; case 200: {
-        uiNamespace setVariable ["cbr_sel", (_sel - 1) max 0];
-    };
-    case 31; case 208: {
-        uiNamespace setVariable ["cbr_sel", (_sel + 1) min (((count _log) - 1) max 0)];
-    };
+    // W / S і стрілки — вибір засічки, по колу
+    case 17; case 200: { [-1] call _fnc_step };
+    case 31; case 208: { [1] call _fnc_step };
 
     // вивести засічку на карту
     case 28; case 156; case 57: {
