@@ -106,9 +106,10 @@ addMissionEventHandler ["ProjectileCreated", {
     if (!local _src) exitWith {};
 
     /*
-        Кому летить доповідь, вирішується ТУТ. Дальність, сторона й
-        сектор — числа публічні, і перебрати їх один раз у стрільця
-        дешевше, ніж гнати постріл станціям, які його не бачать.
+        Кому летить доповідь, вирішується ТУТ — по числах, які й так
+        публічні. Це саме ГРУБИЙ відсів, щоб не гнати мережею постріли
+        з іншого кінця карти: чи справді станція бачила снаряд, вирішує
+        вже вона сама, прорахувавши дугу й рельєф.
     */
     private _pos = getPosASL _proj;
     private _side = side _src;
@@ -120,17 +121,7 @@ addMissionEventHandler ["ProjectileCreated", {
         // свій вогонь станція теж бачить, доповідати про нього нема сенсу
         if (([_radar] call cbr_fnc_side) getFriend _side >= 0.6) then { continue };
 
-        private _rPos = getPosASL _radar;
-        if (_rPos distance _pos > (_radar getVariable ["cbr_range", CBR_RANGE])) then { continue };
-
-        // напрямок сектора веде оператор із пульта; 360 = круговий огляд
-        private _sector = _radar getVariable ["cbr_sector", CBR_SECTOR];
-        if (_sector < 360) then {
-            private _d = _pos vectorDiff _rPos;
-            private _az = (_d select 0) atan2 (_d select 1);
-            private _bear = _radar getVariable ["cbr_bearing", getDir _radar];
-            if (abs (((_az - _bear + 540) mod 360) - 180) > _sector / 2) then { continue };
-        };
+        if ((getPosASL _radar) distance _pos > (_radar getVariable ["cbr_range", CBR_RANGE])) then { continue };
 
         _to pushBack [_radar, _op];
     } forEach cbr_active;

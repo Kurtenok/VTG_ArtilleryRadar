@@ -126,6 +126,7 @@ class CfgFunctions {
         class radar {
             file = "\z\vtgcbr\addons\cbr\functions";
             class addRadar {};
+            class arc {};
             class caliber {};
             class canUse {};
             class console {};
@@ -138,7 +139,6 @@ class CfgFunctions {
             class erase {};
             class initModule {};
             class hhmm {};
-            class impact {};
             class manned {};
             class mark {};
             class preInit { preInit = 1; };
@@ -149,6 +149,7 @@ class CfgFunctions {
             class slew {};
             class stockApply {};
             class transmit {};
+            class visible {};
         };
     };
 };
