@@ -37,12 +37,26 @@ addMissionEventHandler ["ProjectileCreated", {
         летять своїм двигуном і своєю логікою.
     */
     private _type = typeOf _proj;
-    private _ballistic = cbr_ballistic get _type;
-    if (isNil "_ballistic") then {
-        _ballistic = _proj isKindOf "ShellCore"
-            || {_proj isKindOf "RocketCore" && {!(_proj isKindOf "MissileCore")}};
-        cbr_ballistic set [_type, _ballistic];
+    private _info = cbr_ballistic get _type;
+    if (isNil "_info") then {
+        private _rocket = _proj isKindOf "RocketCore" && {!(_proj isKindOf "MissileCore")};
+
+        /*
+            Скільки горить двигун — питаємо ЛИШЕ в ракет. У снарядів
+            thrust успадковується від рушійного класу движка, тіла
+            якого в конфігах немає, тож значення там непередбачуване.
+            Наявність двигуна визначає саме дерево класів, а не поле.
+        */
+        private _burn = 0;
+        if (_rocket) then {
+            private _cfg = configFile >> "CfgAmmo" >> _type;
+            _burn = getNumber (_cfg >> "initTime") + getNumber (_cfg >> "thrustTime");
+        };
+
+        _info = [_rocket || {_proj isKindOf "ShellCore"}, _burn];
+        cbr_ballistic set [_type, _info];
     };
+    _info params ["_ballistic", "_burn"];
     if (!_ballistic) exitWith {};
 
     private _vel = velocity _proj;
@@ -81,32 +95,32 @@ addMissionEventHandler ["ProjectileCreated", {
         зі сторони не відтворюється. Тому чекаємо вигоряння й знімаємо
         стан із самого снаряда — далі він летить уже вільно.
 
-        Тяга є в одиниць боєприпасів; артилерія й міномети йдуть без
-        затримки тим самим рядком, що й раніше.
+        Двигун є в одиниць боєприпасів; артилерія, міномети й танки
+        йдуть без затримки тим самим рядком, що й раніше.
     */
-    private _cfg = configFile >> "CfgAmmo" >> _type;
-    private _burn = 0;
-    if (getNumber (_cfg >> "thrust") > 0) then {
-        _burn = getNumber (_cfg >> "initTime") + getNumber (_cfg >> "thrustTime");
-    };
-
     if (_burn <= 0) exitWith {
         [_pos, [_pos, _vel], _type, round _speed, _fireAz, side _src]
             remoteExec ["cbr_fnc_detect", 2];
     };
 
     [{
-        params ["_proj", "_pos", "_type", "_fireAz", "_side"];
+        params ["_proj", "_pos", "_vel", "_type", "_speed", "_fireAz", "_side"];
 
-        // не дотягнув до вигоряння: станція не встигла зняти дугу й
-        // рахувати їй нема з чого
-        if (isNull _proj) exitWith {};
+        /*
+            Замір після вигоряння лише УТОЧНЮЄ точку падіння. Сама
+            засічка від нього не залежить, тож якщо снаряд до цієї миті
+            не дожив, доповідь однаково йде — по дульних даних.
+        */
+        private _track = [_pos, _vel];
+        if (!isNull _proj) then {
+            private _now = velocity _proj;
+            _track = [getPosASL _proj, _now];
 
-        // швидкість беремо тут, а не з дула: у реактивного вона на
-        // старті ще не набрана, і в доповідь пішло б заниження
-        private _vel = velocity _proj;
+            // швидкість беремо тут: у реактивного вона на старті ще не
+            // набрана, і в доповідь пішло б заниження
+            _speed = round (vectorMagnitude _now);
+        };
 
-        [_pos, [getPosASL _proj, _vel], _type, round (vectorMagnitude _vel), _fireAz, _side]
-            remoteExec ["cbr_fnc_detect", 2];
-    }, [_proj, _pos, _type, _fireAz, side _src], _burn] call CBA_fnc_waitAndExecute;
+        [_pos, _track, _type, _speed, _fireAz, _side] remoteExec ["cbr_fnc_detect", 2];
+    }, [_proj, _pos, _vel, _type, round _speed, _fireAz, side _src], _burn] call CBA_fnc_waitAndExecute;
 }];

@@ -41,9 +41,11 @@ if (isNil "_data") then {
 };
 _data params ["_drag", "_quad", "_g"];
 
+// опір завжди проти руху, тяжіння донизу
 private _fnc_acc = {
-    private _s = vectorMagnitude _this;
-    private _f = -_drag * ([1, _s] select _quad);
+    private _f = -_drag;
+    if (_quad) then { _f = _f * (vectorMagnitude _this) };
+
     [(_this select 0) * _f, (_this select 1) * _f, (_this select 2) * _f + _g]
 };
 
@@ -55,7 +57,9 @@ private _fnc_acc = {
 private _dt = CBR_IMPACT_DT;
 private _s0 = vectorMagnitude _vel;
 if (_drag > 0 && {_s0 > 0}) then {
-    private _a0 = _drag * _s0 * ([1, _s0] select _quad);
+    private _a0 = _drag * _s0;
+    if (_quad) then { _a0 = _a0 * _s0 };
+
     _dt = ((0.02 * _s0 / _a0) max 0.01) min CBR_IMPACT_DT;
 };
 

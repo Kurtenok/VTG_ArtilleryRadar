@@ -73,8 +73,17 @@ private _seen = [];
         private _old = time - CBR_ACQ_LIFE;
         _log = _log select { (_x select 4) > _old };
 
-        // постріли з тієї самої позиції — одна вогнева, а не десяток записів
-        private _idx = _log findIf { (_x select 1) distance2D _pos < CBR_MERGE };
+        /*
+            Постріли з тієї самої позиції — одна вогнева, а не десяток
+            записів. Але «та сама» це ще й той самий снаряд: якщо з
+            двору б'ють і танк, і гаубиця, це дві різні цілі, які просто
+            стоять поруч, і зводити їх в одну не можна.
+        */
+        private _idx = _log findIf {
+            (_x select 1) distance2D _pos < CBR_MERGE
+            && {(_x select 2) == _cal}
+            && {abs ((_x select 3) - _speed) < CBR_SAME_SPEED * ((_x select 3) max _speed)}
+        };
 
         /*
             Скільки замірів уже є по цій позиції — стільки разів її й
@@ -123,11 +132,16 @@ private _seen = [];
         };
 
         if (_idx > -1) then {
+            // Заміри йдуть від СВІЖОГО пострілу. Калібр у записі вже той
+            // самий, а от азимут змінюється, коли батарея переносить
+            // вогонь, і лишався б від найпершого пострілу
             private _acq = _log select _idx;
             _acq set [1, _fix];      // уточнена позиція
+            _acq set [3, _speed];
             _acq set [4, time];
             _acq set [5, _rounds];
             _acq set [6, _err];      // і звужене коло
+            _acq set [7, _fireAz];
             _acq set [9, _hits];
         } else {
             private _n = (_radar getVariable ["cbr_acqId", 0]) + 1;
