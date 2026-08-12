@@ -5,8 +5,8 @@
     Робить машину контрбатарейним радаром:
         [_veh, [дальність, сектор, похибка, затримка]] call cbr_fnc_addRadar;
 
-    Реєстр веде КОЖНА машина: за ним машина стрільця вирішує, чи є сенс
-    узагалі щось надсилати. Тому список і найбільша дальність публічні.
+    Реєстр веде КОЖНА машина: за ним машина стрільця вирішує, кому саме
+    надсилати засічку, — тому список і налаштування станцій публічні.
 */
 
 params [
@@ -31,13 +31,6 @@ if (isServer) then {
     _veh setVariable ["cbr_error", _error max 0, true];
     _veh setVariable ["cbr_delay", _delay max 0, true];
 
-    // найбільша дальність у місії: одним порівнянням машина стрільця
-    // відсікає обстріли, до яких жоден радар не дотягується
-    if (_range > (missionNamespace getVariable ["cbr_maxRange", 0])) then {
-        cbr_maxRange = _range;
-        publicVariable "cbr_maxRange";
-    };
-
     if (!(_veh getVariable ["cbr_initDone", false])) then {
         _veh setVariable ["cbr_initDone", true, true];
 
@@ -48,7 +41,14 @@ if (isServer) then {
         if (isNil "cbr_radars") then { cbr_radars = [] };
         cbr_radars pushBack _veh;
         publicVariable "cbr_radars";
+
+        // знищена станція випадає з переліку діючих: посадку екіпажу
+        // стежить клієнт, а от загибель машини — лише сервер
+        _veh addEventHandler ["Killed", { [] call cbr_fnc_manned }];
     };
+
+    // машина могла приїхати вже з екіпажем — модулем Едему або з Zeus
+    [] call cbr_fnc_manned;
 };
 
 // меню клієнтське — будується в кожного

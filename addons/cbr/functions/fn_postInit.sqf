@@ -5,12 +5,15 @@
     створено, і в спокої мод не коштує нічого.
 
     Через обробник іде КОЖНА куля місії, тому перевірки вишикувані від
-    найдешевшої до найдорожчої.
+    найдешевшої до найдорожчої, а найперша з них — чи сидить за пультом
+    хоч хтось. Без оператора не рахується нічого й ніде.
 */
 
 if (isNil "cbr_radars") then { cbr_radars = [] };
+if (isNil "cbr_active") then { cbr_active = [] };
 
-// балістичність класу боєприпасу: питається в конфіга раз і лишається
+// балістичність класу боєприпасу й час роботи двигуна: питається в
+// конфіга раз на клас і далі береться з кеша
 if (isNil "cbr_ballistic") then { cbr_ballistic = createHashMap };
 
 // штатні радари зі списку класів; наступним кадром — модулі Едему
@@ -19,19 +22,44 @@ if (isNil "cbr_ballistic") then { cbr_ballistic = createHashMap };
 ["CBA_settingsInitialized", { [] call cbr_fnc_stock }] call CBA_fnc_addEventHandler;
 ["CBA_SettingChanged", { [] call cbr_fnc_stock }] call CBA_fnc_addEventHandler;
 
+/*
+    Хто сів за пульт, а хто вийшов. Стежить сам клієнт: подія CBA ловить
+    будь-яку зміну машини, зокрема й посадку скриптом, тоді як подіями
+    на самій станції довелося б покладатися на її локальність.
+
+    Сервера турбуємо лише коли зачеплено саму станцію — а не щоразу,
+    коли хтось сідає в буханку.
+*/
+if (hasInterface) then {
+    ["vehicle", {
+        params ["_unit", "_veh"];
+
+        private _in = cbr_radars findIf { _x isEqualTo _veh } > -1;
+        if (!_in && {!(missionNamespace getVariable ["cbr_wasIn", false])}) exitWith {};
+
+        cbr_wasIn = _in;
+        [] remoteExecCall ["cbr_fnc_manned", 2];
+    }] call CBA_fnc_addPlayerEventHandler;
+};
+
+// вихід гравця з гри посадку не знімає, тож перелік оновлюємо й тут
+if (isServer) then {
+    addMissionEventHandler ["HandleDisconnect", { [] call cbr_fnc_manned; false }];
+};
+
 addMissionEventHandler ["ProjectileCreated", {
     params ["_proj"];
 
-    // без радарів у місії куля коштує одного порівняння
-    if (cbr_radars isEqualTo []) exitWith {};
+    // без діючої станції постріл коштує одного порівняння
+    if (cbr_active isEqualTo []) exitWith {};
 
     // грубий відсів; головна перевірка нижче, по стрільцеві
     if (!local _proj) exitWith {};
 
     /*
-        Балістика це чи ні — властивість КЛАСУ, а не снаряда, тож
-        питаємо конфіг раз на клас і далі беремо з кеша: isKindOf ходить
-        по дереву спадкування, а куль за бій летять тисячі.
+        Балістичність це чи ні — властивість КЛАСУ, а не снаряда, тож
+        питаємо конфіг раз на клас: isKindOf ходить по дереву
+        спадкування, а куль за бій летять тисячі.
 
         Кероване не рахується: радар шукає балістику, а ПТУР і ЗУР
         летять своїм двигуном і своєю логікою.
@@ -68,12 +96,6 @@ addMissionEventHandler ["ProjectileCreated", {
     private _elev = asin (((_vel select 2) / _speed) max -1 min 1);
     if (_elev < CBR_MIN_ELEV) exitWith {};
 
-    // Останній фільтр перед мережею: чи дотягується постріл хоч до
-    // якогось радара — cbr_maxRange це найбільша дальність у місії
-    private _pos = getPosASL _proj;
-    private _max = missionNamespace getVariable ["cbr_maxRange", 0];
-    if (cbr_radars findIf { !isNull _x && {(getPosASL _x) distance _pos < _max} } < 0) exitWith {};
-
     // сторона стрільця: наводчик, а якщо його немає — сама установка
     (getShotParents _proj) params ["_srcVeh", "_srcMan"];
     private _src = [_srcVeh, _srcMan] select (!isNull _srcMan);
@@ -83,28 +105,49 @@ addMissionEventHandler ["ProjectileCreated", {
     // а копію снаряда симулює кожен клієнт — звідси й подвійний рахунок
     if (!local _src) exitWith {};
 
-    // на карту йдуть ЗАМІРИ, а не здогад про тип знаряддя: калібр і
-    // дульна швидкість, а вже що це за система — справа розрахунку.
-    // Азимут пострілу каже, КОГО накривають, чого з самої позиції не видно
-    private _az = (_vel select 0) atan2 (_vel select 1);
-    private _fireAz = (round _az + 360) mod 360;
+    /*
+        Кому летить доповідь, вирішується ТУТ. Дальність, сторона й
+        сектор — числа публічні, і перебрати їх один раз у стрільця
+        дешевше, ніж гнати постріл станціям, які його не бачать.
+    */
+    private _pos = getPosASL _proj;
+    private _side = side _src;
+    private _to = [];
+
+    {
+        _x params ["_radar", "_op"];
+
+        // свій вогонь станція теж бачить, доповідати про нього нема сенсу
+        if (([_radar] call cbr_fnc_side) getFriend _side >= 0.6) then { continue };
+
+        private _rPos = getPosASL _radar;
+        if (_rPos distance _pos > (_radar getVariable ["cbr_range", CBR_RANGE])) then { continue };
+
+        // напрямок сектора веде оператор із пульта; 360 = круговий огляд
+        private _sector = _radar getVariable ["cbr_sector", CBR_SECTOR];
+        if (_sector < 360) then {
+            private _d = _pos vectorDiff _rPos;
+            private _az = (_d select 0) atan2 (_d select 1);
+            private _bear = _radar getVariable ["cbr_bearing", getDir _radar];
+            if (abs (((_az - _bear + 540) mod 360) - 180) > _sector / 2) then { continue };
+        };
+
+        _to pushBack [_radar, _op];
+    } forEach cbr_active;
+
+    if (_to isEqualTo []) exitWith {};
+
+    // азимут пострілу каже, КОГО накривають, чого з самої позиції не видно
+    private _fireAz = (round ((_vel select 0) atan2 (_vel select 1)) + 360) mod 360;
 
     /*
         Реактивний снаряд рахувати від дула не можна: доки працює
         двигун, дуга не балістична, а напрямок тяги йде за корпусом і
         зі сторони не відтворюється. Тому чекаємо вигоряння й знімаємо
         стан із самого снаряда — далі він летить уже вільно.
-
-        Двигун є в одиниць боєприпасів; артилерія, міномети й танки
-        йдуть без затримки тим самим рядком, що й раніше.
     */
-    if (_burn <= 0) exitWith {
-        [_pos, [_pos, _vel], _type, round _speed, _fireAz, side _src]
-            remoteExec ["cbr_fnc_detect", 2];
-    };
-
-    [{
-        params ["_proj", "_pos", "_vel", "_type", "_speed", "_fireAz", "_side"];
+    private _fnc_report = {
+        params ["_proj", "_to", "_pos", "_vel", "_type", "_speed", "_fireAz"];
 
         /*
             Замір після вигоряння лише УТОЧНЮЄ точку падіння. Сама
@@ -116,11 +159,22 @@ addMissionEventHandler ["ProjectileCreated", {
             private _now = velocity _proj;
             _track = [getPosASL _proj, _now];
 
-            // швидкість беремо тут: у реактивного вона на старті ще не
-            // набрана, і в доповідь пішло б заниження
+            // у реактивного швидкість на старті ще не набрана, і в
+            // доповідь пішло б заниження
             _speed = round (vectorMagnitude _now);
         };
 
-        [_pos, _track, _type, _speed, _fireAz, _side] remoteExec ["cbr_fnc_detect", 2];
-    }, [_proj, _pos, _vel, _type, round _speed, _fireAz, side _src], _burn] call CBA_fnc_waitAndExecute;
+        {
+            _x params ["_radar", "_op"];
+            [_radar, _pos, _track, _type, _speed, _fireAz] remoteExec ["cbr_fnc_detect", _op];
+        } forEach _to;
+    };
+
+    private _args = [_proj, _to, _pos, _vel, _type, round _speed, _fireAz];
+
+    // двигун є в одиниць боєприпасів; артилерія, міномети й танки
+    // доповідають одразу
+    if (_burn <= 0) exitWith { _args call _fnc_report };
+
+    [_fnc_report, _args, _burn] call CBA_fnc_waitAndExecute;
 }];

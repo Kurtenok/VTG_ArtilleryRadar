@@ -139,6 +139,7 @@ class CfgFunctions {
             class initModule {};
             class hhmm {};
             class impact {};
+            class manned {};
             class mark {};
             class preInit { preInit = 1; };
             class postInit { postInit = 1; };
@@ -156,11 +157,11 @@ class CfgFunctions {
 class CfgRemoteExec {
     class Functions {
         mode = 2;
-        class cbr_fnc_detect { allowedTargets = 0; };    // машина стрільця -> сервер
-        class cbr_fnc_report { allowedTargets = 0; };    // сервер -> клієнти сторони
-        class cbr_fnc_addRadar { allowedTargets = 0; };  // підключення з Zeus + JIP
+        class cbr_fnc_detect { allowedTargets = 0; };     // стрілець -> оператор станції
+        class cbr_fnc_manned { allowedTargets = 0; };     // клієнт -> сервер: хто за пультом
+        class cbr_fnc_addRadar { allowedTargets = 0; };   // підключення з Zeus + JIP
         class cbr_fnc_setBearing { allowedTargets = 0; }; // доворот сектора оператором
         class cbr_fnc_mark { allowedTargets = 0; };       // позначка своїй стороні
-        class cbr_fnc_drop { allowedTargets = 0; };       // прибрати засічку з журналу
+        class cbr_fnc_drop { allowedTargets = 0; };       // прибрати засічку в оператора
     };
 };

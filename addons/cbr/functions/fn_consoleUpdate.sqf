@@ -9,32 +9,51 @@
 private _veh = uiNamespace getVariable ["cbr_veh", objNull];
 if (isNull _veh) exitWith {};
 
-// журнал станції, без протухлих записів; свіжі — зверху
-private _log = (_veh getVariable ["cbr_acq", []]) select { (time - (_x select 4)) < CBR_ACQ_LIFE };
-_log = [_log, [], { -(_x select 4) }, "ASCEND"] call BIS_fnc_sortBy;
-uiNamespace setVariable ["cbr_log", _log];
+private _raw = _veh getVariable ["cbr_acq", []];
+private _log = uiNamespace getVariable ["cbr_log", []];
+
+/*
+    Журнал міняється подіями — постріл раз на кілька секунд, — а тік
+    іде чотири рази на секунду. Тому сортування й складання підписів
+    робляться лише коли він справді змінився або коли з нього щось
+    протухло за віком.
+
+    Порівнюється КОПІЯ: запис оновлюється на місці, і посилання
+    зрівнялося б саме із собою, скільки б не мінялось.
+*/
+if (
+    _raw isNotEqualTo (uiNamespace getVariable ["cbr_raw", []])
+    || {_log findIf { (time - (_x select 4)) >= CBR_ACQ_LIFE } > -1}
+) then {
+    uiNamespace setVariable ["cbr_raw", +_raw];
+
+    // без протухлих записів; свіжі — зверху
+    _log = _raw select { (time - (_x select 4)) < CBR_ACQ_LIFE };
+    _log = [_log, [], { -(_x select 4) }, "ASCEND"] call BIS_fnc_sortBy;
+    uiNamespace setVariable ["cbr_log", _log];
+
+    /*
+        Підписи для індикатора збираються тут — вони міняються подіями,
+        а малювання йде щокадру. Складати два десятки рядків по
+        шістдесят разів на секунду нема сенсу.
+    */
+    private _fmtCal = localize "STR_cbr_label";
+    private _fmtNo = localize "STR_cbr_label_nocal";
+
+    uiNamespace setVariable ["cbr_labels", _log apply {
+        _x params ["_id", "", "_cal", "_speed", "", "_rounds", "", "", ["_when", 0]];
+        format [
+            "%1  %2  x%3  %4",
+            _id,
+            [format [_fmtNo, _speed], format [_fmtCal, _cal, _speed]] select (_cal > 0),
+            _rounds,
+            [_when] call cbr_fnc_hhmm
+        ]
+    }];
+};
 
 private _sel = (uiNamespace getVariable ["cbr_sel", 0]) max 0 min (((count _log) - 1) max 0);
 uiNamespace setVariable ["cbr_sel", _sel];
-
-/*
-    Підписи для індикатора збираються тут — вони міняються подіями, а
-    малювання йде щокадру. Складати два десятки рядків по шістдесят
-    разів на секунду нема сенсу.
-*/
-private _fmtCal = localize "STR_cbr_label";
-private _fmtNo = localize "STR_cbr_label_nocal";
-
-uiNamespace setVariable ["cbr_labels", _log apply {
-    _x params ["_id", "", "_cal", "_speed", "", "_rounds", "", "", ["_when", 0]];
-    format [
-        "%1  %2  x%3  %4",
-        _id,
-        [format [_fmtNo, _speed], format [_fmtCal, _cal, _speed]] select (_cal > 0),
-        _rounds,
-        [_when] call cbr_fnc_hhmm
-    ]
-}];
 
 private _bearing = _veh getVariable ["cbr_bearing", getDir _veh];
 private _sector = _veh getVariable ["cbr_sector", CBR_SECTOR];
