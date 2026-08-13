@@ -50,11 +50,25 @@ _live pushBack [_t0, _arc, _cal, _tIn, _tOut];
 _radar setVariable ["cbr_flight", _live, true];
 
 /*
-    ЗНАРЯДДЯ. Коротка ділянка дає відмітку, але не засічку: назад по
-    ній рахувати нема чого.
+    ЗНАРЯДДЯ. Тут потрібен не просто супровід, а супровід на ПІДЙОМІ:
+    назад до вогневої станція рахує по висхідній гілці, а спуск веде
+    вже від вершини, і екстраполяція через неї нічого не варта.
+
+    Саме тому станція, відвернута від батареї, бачить її снаряди, але
+    самої батареї не показує: у свій сектор ті входять уже на спуску.
 */
 private _need = _radar getVariable ["cbr_delay", CBR_DELAY];
-if (_tOut - _tIn < _need) exitWith {};
+
+private _apex = 0;
+private _hi = -1e10;
+{
+    if ((_x select 2) > _hi) then {
+        _hi = _x select 2;
+        _apex = _forEachIndex;
+    };
+} forEach _arc;
+
+if (((_apex * CBR_ARC_DT) min _tOut) - _tIn < _need) exitWith {};
 
 // базова похибка зворотної екстраполяції на цій дальності
 private _base = ((getPosASL _radar) distance _pos) * (_radar getVariable ["cbr_error", CBR_ERROR]);
