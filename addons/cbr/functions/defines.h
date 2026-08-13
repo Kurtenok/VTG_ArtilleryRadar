@@ -95,8 +95,10 @@
 #define CBR_MIN_SPEED 40     // повільніше — не балістична ціль
 
 #define CBR_MARKER_TYPE "mil_triangle"
+// Прозора текстура: у drawIcon вона лишає від виклику самий підпис,
+// без жодної позначки. Ванільний код робить підписи так само
+#define CBR_ICO_NONE "#(argb,8,8,3)color(0,0,0,0)"
 #define CBR_ICO_SHELL "\A3\ui_f\data\map\markers\military\dot_CA.paa"
-#define CBR_ICO_FIX "\A3\ui_f\data\map\markers\military\triangle_CA.paa"
 
 // Чат, радіо й позначки мають спільну нумерацію каналів (Channel IDs)
 #define CBR_CHAN_SIDE 1
@@ -140,11 +142,20 @@
 #define CBR_UI_ROWS 12       // рядків у журналі
 #define CBR_UI_ROW_H 34
 
-// drawIcon міряє іконку й підпис у частках ЕКРАНА, а не в метрах, тож
-// одиниці розмітки тут не годяться — вони на два порядки дрібніші.
-// Ділення на getResolution#5 знімає вплив розміру інтерфейсу гравця
+/*
+    У drawIcon в іконки й підпису РІЗНІ одиниці, і плутати їх не можна:
+    ванільний код в одному виклику передає 48 на іконку й 0.07 на текст.
+    Іконка міряється екраном у пікселях, підпис — часткою висоти.
+
+    Тому іконки йдуть від макета 2560 завширшки, як і решта розмітки, а
+    підписи діляться на getResolution#5, щоб не залежати від розміру
+    інтерфейсу гравця. У метрах не міряється ні те, ні те — із зумом
+    карти нічого з цього не росте.
+*/
 #define CBR_UI_COEF (getResolution select 5)
-#define CBR_ICON_SIZE (0.034 / CBR_UI_COEF)
-#define CBR_SHELL_SIZE (0.022 / CBR_UI_COEF)
+#define CBR_PIX ((getResolution select 0) / 2560)
+
+#define CBR_ICON_SIZE (32 * CBR_PIX)
+#define CBR_SHELL_SIZE (14 * CBR_PIX)
 #define CBR_TEXT_SIZE (0.028 / CBR_UI_COEF)
 #define CBR_RING_TEXT (0.022 / CBR_UI_COEF)

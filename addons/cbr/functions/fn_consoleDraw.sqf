@@ -62,7 +62,7 @@ if ((_grid param [0, []]) isNotEqualTo _key) then {
         // підпис по осі сектора; півкілометри пишемо з десятою
         private _km = _d / 1000;
         _texts pushBack [
-            "#(argb,8,8,3)color(0,0,0,0)", CBR_COL_DIM,
+            CBR_ICO_NONE, CBR_COL_DIM,
             [_bearing, _d] call _fnc_at, 0, 0, 0,
             if ((_km - floor _km) < 0.05) then { str round _km } else { _km toFixed 1 },
             0, CBR_RING_TEXT, "RobotoCondensed"
@@ -140,7 +140,6 @@ private _now = time;
         загального часу, тож кожна нова починає власний відлік і не
         пульсує в такт із сусідніми.
     */
-    private _pop = 0;
     if (_age < CBR_PING_FOR && {_err > 0}) then {
         private _t = (_age mod CBR_PING_PERIOD) / CBR_PING_PERIOD;
 
@@ -150,15 +149,14 @@ private _now = time;
             [_col select 0, _col select 1, _col select 2, (1 - _t) * (_col select 3)],
             ""
         ];
-
-        // сама позначка на початку імпульсу трохи набрякає
-        _pop = 0.35 * (1 - _t);
     };
 
-    private _size = CBR_ICON_SIZE * (1 + _pop);
+    // Значка у вогневої немає навмисно: її межі й так окреслює коло
+    // невизначеності, а позначка поверх нього вдавала б точку, якої
+    // станція не знає. Нульовий розмір лишає від виклику самий підпис
     _map drawIcon [
-        CBR_ICO_FIX, _col,
-        _p, _size, _size, 0,
+        CBR_ICO_NONE, _col,
+        _p, 0, 0, 0,
         _label, 0, CBR_TEXT_SIZE, "RobotoCondensed"
     ];
 } forEach (uiNamespace getVariable ["cbr_log", []]);
