@@ -70,8 +70,28 @@ private _hi = -1e10;
 
 if (((_apex * CBR_ARC_DT) min _tOut) - _tIn < _need) exitWith {};
 
-// базова похибка зворотної екстраполяції на цій дальності
-private _base = ((getPosASL _radar) distance _pos) * (_radar getVariable ["cbr_error", CBR_ERROR]);
+/*
+    Як високо снаряд був, коли його взяли, — часткою від вершини. Це і
+    є міра того, скільки підйому лишилось невидимим: за хребтом станція
+    ловить його вже високо, і назад іти доводиться наосліп.
+*/
+private _h0 = (_arc select 0) select 2;
+private _late = 0;
+if (_hi - _h0 > 1) then {
+    private _hAcq = (_arc select (((round (_tIn / CBR_ARC_DT)) max 0) min ((count _arc) - 1))) select 2;
+    _late = ((_hAcq - _h0) / (_hi - _h0)) max 0 min 1;
+};
+
+// базова похибка зворотної екстраполяції: дальність, клас станції й
+// штраф за те, що взяли пізно
+private _sigma = _radar getVariable ["cbr_error", CBR_ERROR];
+private _mult = 1 + CBR_ERROR_LATE * _late;
+
+private _base = ((getPosASL _radar) distance _pos) * _sigma * _mult;
+
+// межа звуження ходить за класом станції: десять метрів — це для
+// стандартної точності, вдвічі гірша впирається вдвічі далі
+private _floor = CBR_ERROR_MIN * (_sigma / CBR_ERROR) * _mult;
 
 /*
     Засічка лягає в журнал не раніше, ніж набрано супровід: станція
@@ -84,7 +104,7 @@ private _wait = (_t0 + _tIn + _need) - time;
 private _mid = _arc select (((round ((_tIn + _need) / CBR_ARC_DT)) max 0) min ((count _arc) - 1));
 
 [{
-    params ["_radar", "_pos", "_cal", "_speed", "_fireAz", "_base", "_mid"];
+    params ["_radar", "_pos", "_cal", "_speed", "_fireAz", "_base", "_mid", "_floor"];
     if (isNull _radar) exitWith {};
 
     // сектор питається аж ТУТ: за час супроводу оператор міг довернути
@@ -127,12 +147,15 @@ private _mid = _arc select (((round ((_tIn + _need) / CBR_ARC_DT)) max 0) min ((
 
         min _base — на випадок ближньої цілі, де базова похибка й так
         менша за межу: точність не має ПОГІРШУВАТИСЬ від замірів.
+
+        Межа тут не стала: за пізнє захоплення вона піднята разом із
+        самим колом, тож обстріл із-за гори до десяти метрів не звузити.
     */
     private _rounds = 1;
     if (_idx > -1) then { _rounds = ((_log select _idx) select 5) + 1 };
 
     private _t = ((_rounds - 1) / ((CBR_ERROR_SHOTS - 1) max 1)) min 1;
-    private _err = (CBR_ERROR_MIN + (_base - CBR_ERROR_MIN) * ((1 - _t) ^ 2)) min _base;
+    private _err = (_floor + (_base - _floor) * ((1 - _t) ^ 2)) min _base;
 
     // засічка зміщена всередині кола випадково, тож на індикаторі
     // знаряддя опиниться не в центрі, а будь-де в ньому
@@ -174,4 +197,4 @@ private _mid = _arc select (((round ((_tIn + _need) / CBR_ARC_DT)) max 0) min ((
     };
 
     _radar setVariable ["cbr_acq", _log, true];
-}, [_radar, _pos, _cal, _speed, _fireAz, _base, _mid], _wait max 0] call CBA_fnc_waitAndExecute;
+}, [_radar, _pos, _cal, _speed, _fireAz, _base, _mid, _floor], _wait max 0] call CBA_fnc_waitAndExecute;
