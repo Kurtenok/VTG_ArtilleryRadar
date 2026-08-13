@@ -142,14 +142,22 @@ _hint ctrlCommit 0;
 
 _display displayAddEventHandler ["KeyDown", { _this call cbr_fnc_consoleKey }];
 _display displayAddEventHandler ["Unload", {
-    private _h = uiNamespace getVariable ["cbr_pfh", -1];
-    if (_h > -1) then { [_h] call CBA_fnc_removePerFrameHandler };
-    uiNamespace setVariable ["cbr_pfh", -1];
+    {
+        private _h = uiNamespace getVariable [_x, -1];
+        if (_h > -1) then { [_h] call CBA_fnc_removePerFrameHandler };
+        uiNamespace setVariable [_x, -1];
+    } forEach ["cbr_pfh", "cbr_pfhLos"];
 }];
 
 // журнал і рядок стану оновлюються рідко: цифри там міняються
 // подіями, а не щокадру. Розгортку веде обробник малювання
 uiNamespace setVariable ["cbr_pfh", [{ [] call cbr_fnc_consoleUpdate }, 0.25] call CBA_fnc_addPerFrameHandler];
 [] call cbr_fnc_consoleUpdate;
+
+// видимість снарядів — окремим обробником, бо він щокадровий: один
+// промінь за кадр по колу, без сплесків
+uiNamespace setVariable ["cbr_los", createHashMap];
+uiNamespace setVariable ["cbr_losAt", -1];
+uiNamespace setVariable ["cbr_pfhLos", [{ [] call cbr_fnc_consoleLos }, 0] call CBA_fnc_addPerFrameHandler];
 
 true

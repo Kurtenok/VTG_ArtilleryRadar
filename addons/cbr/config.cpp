@@ -132,6 +132,7 @@ class CfgFunctions {
             class console {};
             class consoleDraw {};
             class consoleKey {};
+            class consoleLos {};
             class consoleUpdate {};
             class createAceMenu {};
             class detect {};

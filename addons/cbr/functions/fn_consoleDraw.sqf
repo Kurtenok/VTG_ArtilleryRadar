@@ -175,12 +175,17 @@ private _now = time;
 */
 private _fmtCal = localize "STR_cbr_track";
 private _fmtNo = localize "STR_cbr_track_nocal";
+private _losMap = uiNamespace getVariable ["cbr_los", createHashMap];
 
 {
-    _x params ["_t0", "_arc", "_cal", "_tIn", "_tOut"];
+    _x params ["_t0", "_arc", "_cal", "_tIn", "_tOut", "_id"];
 
     private _t = _now - _t0;
     if (_t < _tIn || {_t > _tOut}) then { continue };
+
+    // перекритий будівлею — його зараз не видно. Новий снаряд поки не
+    // дійшла черга вважається видимим: ділянку супроводу він уже пройшов
+    if (!((_losMap getOrDefault [_id, [true]]) select 0)) then { continue };
 
     // положення за часом: відліки дуги рівні, тож досить підстановки
     private _last = (count _arc) - 1;

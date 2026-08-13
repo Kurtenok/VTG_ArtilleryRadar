@@ -46,7 +46,12 @@ private _cal = [_ammo] call cbr_fnc_caliber;
 private _live = (_radar getVariable ["cbr_flight", []]) select {
     (time - (_x select 0)) < (_x select 4)
 };
-_live pushBack [_t0, _arc, _cal, _tIn, _tOut];
+// номер потрібен, щоб пульт міг тримати видимість кожного снаряда
+// окремо: список перебудовується щопострілу, а місце в ньому не стале
+private _sid = (_radar getVariable ["cbr_shellId", 0]) + 1;
+_radar setVariable ["cbr_shellId", _sid];
+
+_live pushBack [_t0, _arc, _cal, _tIn, _tOut, _sid];
 _radar setVariable ["cbr_flight", _live, true];
 
 /*
