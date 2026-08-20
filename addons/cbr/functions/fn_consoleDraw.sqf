@@ -96,7 +96,7 @@ _map drawLine [_pos, [_sw, _far] call _fnc_at, CBR_COL_MAIN];
 
 // сама станція
 _map drawIcon [
-    "\A3\ui_f\data\map\markers\nato\o_installation.paa", CBR_COL_MAIN,
+    CBR_ICO_STATION, CBR_COL_MAIN,
     _pos, CBR_ICON_SIZE, CBR_ICON_SIZE, 0, "", 0, 0, "RobotoCondensed"
 ];
 
@@ -162,43 +162,36 @@ private _now = time;
 } forEach (uiNamespace getVariable ["cbr_log", []]);
 
 /*
-    Снаряди в польоті — крапкою, без хвоста. Дуга прорахована ще при
-    захопленні, тож кадр коштує підстановки часу.
+    Снаряди в польоті — крапкою. Дуга прорахована ще при захопленні, тож
+    кадр коштує підстановки часу.
 
-    Малюється РІВНО той проміжок, поки снаряд у промені: увійшов —
-    з'явився, вийшов — зник. За спиною станції він не тягнеться, бо
-    там його вже ніхто не веде.
+    Видно чи ні — вирішує cbr_fnc_consoleLos у реальному часі: і сектор,
+    і дальність, і рельєф, і будівлі. Тут лише прапорець, бо малювання
+    має лишатись малюванням.
 
-    Сектор при цьому питається ЗАРАЗ, а не береться з моменту
-    захоплення: оператор міг довернути станцію, а вести те, на що вона
-    більше не дивиться, вона не може.
+    Поки черга до снаряда не дійшла, він НЕ малюється: правду знає лише
+    перевірка, і показати наперед означало б блимнути тим, чого станція
+    не бачить.
 */
-private _fmtCal = localize "STR_cbr_track";
-private _fmtNo = localize "STR_cbr_track_nocal";
+// рядки формату кладе пульт при відкритті: localize щокадру ні до чого
+(uiNamespace getVariable ["cbr_fmt", ["%1 %2 %3", "%1 %2"]]) params ["_fmtCal", "_fmtNo"];
 private _losMap = uiNamespace getVariable ["cbr_los", createHashMap];
 
 {
-    _x params ["_t0", "_arc", "_cal", "_tIn", "_tOut", "_id"];
+    _x params ["_t0", "_arc", "_cal", "_id"];
 
+    if !((_losMap getOrDefault [_id, [false]]) select 0) then { continue };
+
+    private _last = (count _arc) - 1;
     private _t = _now - _t0;
-    if (_t < _tIn || {_t > _tOut}) then { continue };
-
-    // перекритий будівлею — його зараз не видно. Новий снаряд поки не
-    // дійшла черга вважається видимим: ділянку супроводу він уже пройшов
-    if (!((_losMap getOrDefault [_id, [true]]) select 0)) then { continue };
+    if (_last < 1 || {_t < 0} || {_t > _last * CBR_ARC_DT}) then { continue };
 
     // положення за часом: відліки дуги рівні, тож досить підстановки
-    private _last = (count _arc) - 1;
-    private _u = ((_t / CBR_ARC_DT) max 0) min _last;
+    private _u = (_t / CBR_ARC_DT) min _last;
     private _i = floor _u;
     private _at = _arc select _i;
     if (_i < _last) then {
         _at = _at vectorAdd (((_arc select (_i + 1)) vectorDiff _at) vectorMultiply (_u - _i));
-    };
-
-    if (_sector < 360) then {
-        private _az = ((_at select 0) - (_pos select 0)) atan2 ((_at select 1) - (_pos select 1));
-        if (abs (((_az - _bearing + 540) mod 360) - 180) > _half) then { continue };
     };
 
     // швидкість дають самі відліки дуги: вони рівні за часом
@@ -208,7 +201,9 @@ private _losMap = uiNamespace getVariable ["cbr_los", createHashMap];
     _map drawIcon [
         CBR_ICO_SHELL, CBR_COL_MAIN,
         _at, CBR_SHELL_SIZE, CBR_SHELL_SIZE, 0,
-        [format [_fmtNo, _v, _h], format [_fmtCal, _cal, _v, _h]] select (_cal > 0),
+        // саме if, а не select: той склав би ОБИДВА рядки, щоб одразу
+        // викинути один, і так на кожен снаряд кожного кадру
+        if (_cal > 0) then { format [_fmtCal, _cal, _v, _h] } else { format [_fmtNo, _v, _h] },
         0, CBR_TEXT_SIZE, "RobotoCondensed"
     ];
 } forEach (_veh getVariable ["cbr_flight", []]);

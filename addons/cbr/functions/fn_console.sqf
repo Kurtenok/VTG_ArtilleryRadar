@@ -157,6 +157,7 @@ uiNamespace setVariable ["cbr_pfh", [{ [] call cbr_fnc_consoleUpdate }, 0.25] ca
 // видимість снарядів — окремим обробником, бо він щокадровий: один
 // промінь за кадр по колу, без сплесків
 uiNamespace setVariable ["cbr_los", createHashMap];
+uiNamespace setVariable ["cbr_fmt", [localize "STR_cbr_track", localize "STR_cbr_track_nocal"]];
 uiNamespace setVariable ["cbr_losAt", -1];
 uiNamespace setVariable ["cbr_pfhLos", [{ [] call cbr_fnc_consoleLos }, 0] call CBA_fnc_addPerFrameHandler];
 

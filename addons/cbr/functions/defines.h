@@ -113,6 +113,7 @@
 // Прозора текстура: у drawIcon вона лишає від виклику самий підпис,
 // без жодної позначки. Ванільний код робить підписи так само
 #define CBR_ICO_NONE "#(argb,8,8,3)color(0,0,0,0)"
+#define CBR_ICO_STATION "\A3\ui_f\data\map\markers\nato\o_installation.paa"
 #define CBR_ICO_SHELL "\A3\ui_f\data\map\markers\military\dot_CA.paa"
 
 // Чат, радіо й позначки мають спільну нумерацію каналів (Channel IDs)
@@ -123,14 +124,12 @@
 #define CBR_UI_SCALE 1
 #define CBR_LU (safeZoneH / 1440)
 #define CBR_PH (CBR_LU * CBR_UI_SCALE)
-#define CBR_PW (CBR_PH * pixelW / pixelH)
 #define CBR_PXU (safeZoneW / 2560)
 
 #define CBR_IDD 8451
 
 // Люмінофор: усе однією фарбою, як на справжньому індикаторі
 #define CBR_COL_BG [0.02, 0.04, 0.03, 0.94]
-#define CBR_COL_PANEL [0.05, 0.09, 0.06, 0.85]
 #define CBR_COL_MAIN [0.35, 0.95, 0.5, 0.9]
 #define CBR_COL_DIM [0.35, 0.95, 0.5, 0.28]
 #define CBR_COL_FAINT [0.35, 0.95, 0.5, 0.12]

@@ -2,18 +2,23 @@
 
 /*
     Function: cbr_fnc_consoleLos
-    Пряма видимість до снарядів у польоті: промінь від станції до самого
-    снаряда. Рельєф тут ні до чого, його вже врахувала ділянка супроводу
-    — цей промінь шукає те, чого карта висот не знає взагалі: будівлі,
-    ангари, склепіння.
+    Чи видно снаряд ЗАРАЗ. Уся перевірка променя — дальність, кут над
+    обрієм, сектор, рельєф і поставлені об'єкти — робиться в реальному
+    часі, а не береться з моменту пострілу.
 
-    За кадр іде РІВНО ОДИН промінь, по колу. Пачка променів разом дала б
-    оператору смикання рівно тоді, коли по ньому працює батарея, а так
-    навантаження рівне, скільки б снарядів не летіло: десяток облітається
-    за шосту частину секунди, три десятки — за півсекунди.
+    Саме так, і це не дрібниця. Раніше проміжок видимості рахувався раз,
+    при захопленні, і брався ПЕРШИЙ суцільний. Наслідків було два:
+    доворот станції вже після пострілу нічого не міняв — снаряда для неї
+    не існувало, — а снаряд, що вийшов із зони й повернувся, більше не
+    з'являвся, бо другий захід у той проміжок не потрапляв.
 
-    Кожен снаряд перепитується не частіше, ніж раз на CBR_LOS_EVERY: за
-    пів секунди снаряд не зайде за будинок і не вийде з-за нього.
+    За кадр іде РІВНО ОДИН промінь, по колу: пачка разом дала б смикання
+    рівно тоді, коли по оператору працює батарея. Кожен снаряд
+    перепитується не частіше, ніж раз на CBR_LOS_EVERY — за пів секунди
+    він не встигне ані зайти за будинок, ані вийти з сектора.
+
+    Порядок перевірок за ціною: геометрія це кілька множень, профіль
+    рельєфу — сотня звернень до карти висот, промінь — запит до движка.
 */
 
 private _veh = uiNamespace getVariable ["cbr_veh", objNull];
@@ -33,7 +38,13 @@ if (_n == 0) exitWith {
     if (count _los > 0) then { uiNamespace setVariable ["cbr_los", createHashMap] };
 };
 
+private _eye = (getPosASL _veh) vectorAdd [0, 0, CBR_MAST];
 private _from = getPosASL _veh;
+
+private _range = _veh getVariable ["cbr_range", CBR_RANGE];
+private _sector = _veh getVariable ["cbr_sector", CBR_SECTOR];
+private _bear = _veh getVariable ["cbr_bearing", getDir _veh];
+
 private _now = time;
 private _at = uiNamespace getVariable ["cbr_losAt", -1];
 
@@ -42,34 +53,75 @@ private _k = 0;
 
 // шукаємо перший снаряд, якому час перепитатись; коло замикається за
 // один прохід, тож зайвої роботи не буде навіть коли перевіряти нема кого
+/*
+    Тіло циклу вкладеними умовами, а не з continue: у forEach той
+    перевірений, а от у while прецеденту немає ні в ACE, ні в CBA, ні в
+    ваніліті. Неперевірена конструкція в щокадровому шляху того не
+    варта — вкладення коштує рівно стільки ж.
+*/
 while { !_done && {_k < _n} } do {
     _k = _k + 1;
     _at = (_at + 1) mod _n;
 
-    (_live select _at) params ["_t0", "_arc", "", "_tIn", "_tOut", "_id"];
+    (_live select _at) params ["_t0", "_arc", "", "_id"];
 
+    private _last = (count _arc) - 1;
     private _t = _now - _t0;
-    if (_t >= _tIn && {_t <= _tOut}) then {
-        private _was = _los getOrDefault [_id, [true, -1e10]];
 
-        if (_now - (_was select 1) >= CBR_LOS_EVERY) then {
-            // положення за часом: відліки дуги рівні, тож досить підстановки
-            private _last = (count _arc) - 1;
-            private _u = ((_t / CBR_ARC_DT) max 0) min _last;
-            private _i = floor _u;
-            private _p = _arc select _i;
-            if (_i < _last) then {
-                _p = _p vectorAdd (((_arc select (_i + 1)) vectorDiff _p) vectorMultiply (_u - _i));
+    // ще не вилетів, уже впав, або черга до нього ще не настала
+    private _due = _last > 0
+        && {_t >= 0}
+        && {_t <= _last * CBR_ARC_DT}
+        && {_now - ((_los getOrDefault [_id, [false, -1e10]]) select 1) >= CBR_LOS_EVERY};
+
+    if (_due) then {
+        // положення за часом: відліки дуги рівні, тож досить підстановки
+        private _u = ((_t / CBR_ARC_DT) max 0) min _last;
+        private _i = floor _u;
+        private _p = _arc select _i;
+        if (_i < _last) then {
+            _p = _p vectorAdd (((_arc select (_i + 1)) vectorDiff _p) vectorMultiply (_u - _i));
+        };
+
+        private _d = _p vectorDiff _eye;
+        private _dist = vectorMagnitude _d;
+        private _seen = _dist <= _range;
+
+        // нижче кута променя снаряд ще не піднявся
+        if (_seen) then {
+            private _flat = sqrt (((_d select 0) ^ 2) + ((_d select 1) ^ 2));
+            _seen = ((_d select 2) atan2 _flat) >= CBR_BEAM_MIN;
+        };
+
+        // сектор питається ЗАРАЗ: оператор міг довернути станцію
+        if (_seen && {_sector < 360}) then {
+            private _az = (_d select 0) atan2 (_d select 1);
+            _seen = abs (((_az - _bear + 540) mod 360) - 180) <= _sector / 2;
+        };
+
+        // рельєф: відліками карти висот, без променя
+        if (_seen) then {
+            private _steps = (ceil (_dist / CBR_LOS_STEP)) max CBR_LOS_MIN;
+            private _blocked = false;
+            private _j = 1;
+
+            while { !_blocked && {_j < _steps} } do {
+                private _s = _eye vectorAdd (_d vectorMultiply (_j / _steps));
+                _blocked = (getTerrainHeightASL [_s select 0, _s select 1]) > (_s select 2);
+                _j = _j + 1;
             };
 
-            // сама станція з розрахунку виключена, інакше затуляла б себе
-            _los set [_id, [
-                lineIntersectsSurfaces [_from, _p, _veh, objNull, true, 1] isEqualTo [],
-                _now
-            ]];
-
-            _done = true;
+            _seen = !_blocked;
         };
+
+        // поставлені об'єкти: карта висот про них не знає нічого. Сама
+        // станція з розрахунку виключена, інакше затуляла б себе
+        if (_seen) then {
+            _seen = lineIntersectsSurfaces [_from, _p, _veh, objNull, true, 1] isEqualTo [];
+        };
+
+        _los set [_id, [_seen, _now]];
+        _done = true;
     };
 };
 
