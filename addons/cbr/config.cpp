@@ -142,6 +142,7 @@ class CfgFunctions {
             class hhmm {};
             class manned {};
             class mark {};
+            class record {};
             class preInit { preInit = 1; };
             class postInit { postInit = 1; };
             class side {};

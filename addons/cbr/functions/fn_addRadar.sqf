@@ -29,7 +29,9 @@ if (isServer) then {
     _veh setVariable ["cbr_range", _range, true];
     _veh setVariable ["cbr_sector", 0 max _sector min 360, true];
     _veh setVariable ["cbr_error", _error max 0, true];
-    _veh setVariable ["cbr_delay", _delay max 0, true];
+    // менше за супровід затримці бути нема сенсу: рахувати назад
+    // станція починає лише після нього
+    _veh setVariable ["cbr_delay", _delay max CBR_TRACK_MIN, true];
 
     if (!(_veh getVariable ["cbr_initDone", false])) then {
         _veh setVariable ["cbr_initDone", true, true];

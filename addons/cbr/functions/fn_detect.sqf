@@ -68,7 +68,11 @@ private _win = [_radar, _arc] call cbr_fnc_track;
 if (_win isEqualTo []) exitWith {};
 _win params ["_tIn", "_tOut"];
 
-private _need = _radar getVariable ["cbr_delay", CBR_DELAY];
+/*
+    Затримка ніколи не менша за супровід: інакше «рахунок» тривав би
+    від'ємний час. Модуль її теж підрізає, це друга лінія оборони.
+*/
+private _need = (_radar getVariable ["cbr_delay", CBR_DELAY]) max CBR_TRACK_MIN;
 
 private _apex = 0;
 private _hi = -1e10;
@@ -79,7 +83,9 @@ private _hi = -1e10;
     };
 } forEach _arc;
 
-if (((_apex * CBR_ARC_DT) min _tOut) - _tIn < _need) exitWith {};
+// вести треба CBR_TRACK_MIN секунд, не всю затримку: решта її —
+// рахунок, і снаряд для нього вже не потрібен
+if (((_apex * CBR_ARC_DT) min _tOut) - _tIn < CBR_TRACK_MIN) exitWith {};
 
 /*
     Як високо снаряд був, коли його взяли, — часткою від вершини. Це і
@@ -105,21 +111,25 @@ private _base = ((getPosASL _radar) distance _pos) * _sigma * _mult;
 private _floor = CBR_ERROR_MIN * (_sigma / CBR_ERROR) * _mult;
 
 /*
-    Засічка лягає в журнал не раніше, ніж набрано супровід: станція
-    веде снаряд від входу в промінь і лише потім рахує назад.
-*/
-private _wait = (_t0 + _tIn + _need) - time;
+    Дві черги, і поділ між ними принциповий.
 
-// де снаряд буде, коли супровід набереться: якщо станцію на той час
-// відвернуть, рахувати назад не буде з чого
-private _mid = _arc select (((round ((_tIn + _need) / CBR_ARC_DT)) max 0) min ((count _arc) - 1));
+    ПЕРША — кінець супроводу. Станції треба провести снаряд CBR_TRACK_MIN
+    секунд, і рівно тут вирішується, чи вона його справді вела: сектор
+    питається на ту мить, коли супровід добігав кінця.
+
+    ДРУГА — решта затримки. Це вже РАХУНОК, і снаряд для нього не
+    потрібен: він може давно вийти із зони чи впасти. Раніше видимість
+    вимагалась усю затримку цілком, і швидкий снаряд, що прошивав зону
+    за кілька секунд, не давав вогневої взагалі.
+*/
+private _mid = _arc select (((round ((_tIn + CBR_TRACK_MIN) / CBR_ARC_DT)) max 0) min ((count _arc) - 1));
 
 [{
-    params ["_radar", "_pos", "_cal", "_speed", "_fireAz", "_base", "_mid", "_floor"];
+    params ["_radar", "_pos", "_cal", "_speed", "_fireAz", "_base", "_mid", "_floor", "_rest"];
     if (isNull _radar) exitWith {};
 
-    // сектор питається аж ТУТ: за час супроводу оператор міг довернути
-    // станцію, і тоді засічки не буде — вести стало нічим
+    // за час супроводу оператор міг довернути станцію — тоді вести
+    // стало нічим, і засічки не буде
     private _sector = _radar getVariable ["cbr_sector", CBR_SECTOR];
     private _seen = true;
     if (_sector < 360) then {
@@ -130,82 +140,12 @@ private _mid = _arc select (((round ((_tIn + _need) / CBR_ARC_DT)) max 0) min ((
     };
     if (!_seen) exitWith {};
 
-    /*
-        Журнал живе на самій станції й публічний: його бачить будь-хто
-        з екіпажу, він переживає пересадку оператора, і мережею йде
-        один запис на постріл, а не розсилка на всю сторону.
-    */
-    private _log = _radar getVariable ["cbr_acq", []];
-    private _old = time - CBR_ACQ_LIFE;
-    _log = _log select { (_x select 4) > _old };
-
-    /*
-        Постріли з тієї самої позиції — одна вогнева, а не десяток
-        записів. Але «та сама» це ще й той самий снаряд: якщо з двору
-        б'ють і танк, і гаубиця, це дві різні цілі, які просто стоять
-        поруч, і зводити їх в одну не можна.
-    */
-    private _idx = _log findIf {
-        (_x select 1) distance2D _pos < CBR_MERGE
-        && {(_x select 2) == _cal}
-        && {abs ((_x select 3) - _speed) < CBR_SAME_SPEED * ((_x select 3) max _speed)}
-    };
-
-    /*
-        Скільки замірів уже є по цій позиції — стільки разів її й
-        міряли. Коло звужується з кожним, доходячи до межі на
-        CBR_ERROR_SHOTS пострілі; далі точніше вже не буде.
-
-        min _base — на випадок ближньої цілі, де базова похибка й так
-        менша за межу: точність не має ПОГІРШУВАТИСЬ від замірів.
-
-        Межа тут не стала: за пізнє захоплення вона піднята разом із
-        самим колом, тож обстріл із-за гори до десяти метрів не звузити.
-    */
-    private _rounds = 1;
-    if (_idx > -1) then { _rounds = ((_log select _idx) select 5) + 1 };
-
-    private _t = ((_rounds - 1) / ((CBR_ERROR_SHOTS - 1) max 1)) min 1;
-    private _err = (_floor + (_base - _floor) * ((1 - _t) ^ 2)) min _base;
-
-    // засічка зміщена всередині кола випадково, тож на індикаторі
-    // знаряддя опиниться не в центрі, а будь-де в ньому
-    private _fnc_blur = {
-        params ["_p", "_radius"];
-        private _r = _radius * sqrt (random 1);
-        private _a = random 360;
-        [(_p select 0) + _r * sin _a, (_p select 1) + _r * cos _a, 0]
-    };
-
-    private _fix = [_pos, _err] call _fnc_blur;
-
-    if (_idx > -1) then {
-        // Заміри йдуть від СВІЖОГО пострілу. Калібр у записі вже той
-        // самий, а от азимут змінюється, коли батарея переносить
-        // вогонь, і лишався б від найпершого пострілу
-        private _acq = _log select _idx;
-        _acq set [1, _fix];      // уточнена позиція
-        _acq set [3, _speed];
-        _acq set [4, time];
-        _acq set [5, _rounds];
-        _acq set [6, _err];      // і звужене коло
-        _acq set [7, _fireAz];
-    } else {
-        private _n = (_radar getVariable ["cbr_acqId", 0]) + 1;
-        _radar setVariable ["cbr_acqId", _n];
-
-        /*
-            [0 номер, 1 точка, 2 калібр, 3 швидкість, 4 час місії,
-             5 пострілів, 6 радіус невизначеності, 7 азимут стрільби,
-             8 час доби]
-
-            Час доби окремо від часу місії: перший потрібен оператору
-            на екрані, другий — для віку засічки. Вивести один з
-            одного не можна, бо прискорення часу розводить їх.
-        */
-        _log pushBack [_n, _fix, _cal, _speed, time, 1, _err, _fireAz, daytime];
-        if (count _log > CBR_ACQ_MAX) then { _log deleteAt 0 };
-    };
-
-    _radar setVariable ["cbr_acq", _log, true];
-}, [_radar, _pos, _cal, _speed, _fireAz, _base, _mid, _floor], _wait max 0] call CBA_fnc_waitAndExecute;
+    [
+        { _this call cbr_fnc_record },
+        [_radar, _pos, _cal, _speed, _fireAz, _base, _floor],
+        _rest
+    ] call CBA_fnc_waitAndExecute;
+},
+    [_radar, _pos, _cal, _speed, _fireAz, _base, _mid, _floor, _need - CBR_TRACK_MIN],
+    ((_t0 + _tIn + CBR_TRACK_MIN) - time) max 0
+] call CBA_fnc_waitAndExecute;

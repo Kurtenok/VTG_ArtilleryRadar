@@ -7,9 +7,9 @@
             <Ukrainian>Затримка засічки (с)</Ukrainian>
         </Key>
         <Key ID="STR_cbr_arg_delay_desc">
-            <English>Delay before a shot shows up on the console: the station has to track a stretch of the trajectory before it can compute back to the origin.</English>
-            <Russian>Задержка до появления выстрела на пульте: станции нужно отследить участок траектории, прежде чем считать назад к точке старта.</Russian>
-            <Ukrainian>Затримка до появи пострілу на пульті: станції треба відстежити ділянку траєкторії, перш ніж рахувати назад до точки старту.</Ukrainian>
+            <English>Delay before a shot shows up on the console. The station has to track the shell for two seconds before it has anything to compute back from; the rest of the delay is the computation itself, and the shell may be long gone by then. Values below two seconds are raised to two.</English>
+            <Russian>Задержка до появления выстрела на пульте. Станции нужно вести снаряд две секунды, чтобы было с чего считать назад; остальная задержка — это уже сам расчёт, и снаряд к тому времени может давно упасть. Меньше двух секунд не ставится.</Russian>
+            <Ukrainian>Затримка до появи пострілу на пульті. Станції треба вести снаряд дві секунди, щоб було з чого рахувати назад; решта затримки — це вже сам рахунок, і снаряд на той час може давно впасти. Менше за дві секунди не ставиться.</Ukrainian>
         </Key>
         <Key ID="STR_cbr_arg_error">
             <English>Error, fraction of range</English>
@@ -17,9 +17,9 @@
             <Ukrainian>Похибка, частка дальності</Ukrainian>
         </Key>
         <Key ID="STR_cbr_arg_error_desc">
-            <English>How far the reported point can sit from the real gun, as a fraction of the distance to it: 0.004 means 80 m at 20 km. The radar computes back along a short arc, so an angular error grows with distance.</English>
-            <Russian>Насколько отметка может отстоять от настоящего орудия, долей от расстояния до него: 0.004 — это 80 м на 20 км. Радар считает назад по короткому участку дуги, поэтому угловая ошибка растёт с дальностью.</Russian>
-            <Ukrainian>Наскільки позначка може відстояти від справжньої гармати, часткою від відстані до неї: 0.004 — це 80 м на 20 км. Радар рахує назад по короткій ділянці дуги, тому кутова помилка росте з дальністю.</Ukrainian>
+            <English>How far the reported point can sit from the real gun, as a fraction of the distance to it: 0.04 means 800 m at 20 km. The radar computes back along a short arc, so an angular error grows with distance.</English>
+            <Russian>Насколько отметка может отстоять от настоящего орудия, долей от расстояния до него: 0.04 — это 800 м на 20 км. Радар считает назад по короткому участку дуги, поэтому угловая ошибка растёт с дальностью.</Russian>
+            <Ukrainian>Наскільки позначка може відстояти від справжньої гармати, часткою від відстані до неї: 0.04 — це 800 м на 20 км. Радар рахує назад по короткій ділянці дуги, тому кутова помилка росте з дальністю.</Ukrainian>
         </Key>
         <Key ID="STR_cbr_arg_range">
             <English>Detection range (m)</English>
