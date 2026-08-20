@@ -146,7 +146,6 @@ class CfgFunctions {
             class postInit { postInit = 1; };
             class side {};
             class stock {};
-            class setBearing {};
             class slew {};
             class stockApply {};
             class track {};
@@ -162,7 +161,6 @@ class CfgRemoteExec {
         class cbr_fnc_detect { allowedTargets = 0; };     // стрілець -> оператор станції
         class cbr_fnc_manned { allowedTargets = 0; };     // клієнт -> сервер: хто за пультом
         class cbr_fnc_addRadar { allowedTargets = 0; };   // підключення з Zeus + JIP
-        class cbr_fnc_setBearing { allowedTargets = 0; }; // доворот сектора оператором
         class cbr_fnc_mark { allowedTargets = 0; };       // позначка своїй стороні
         class cbr_fnc_drop { allowedTargets = 0; };       // прибрати засічку в оператора
     };

@@ -39,7 +39,7 @@ if (isServer) then {
         _veh setVariable ["cbr_bearing", getDir _veh, true];
 
         if (isNil "cbr_radars") then { cbr_radars = [] };
-        cbr_radars pushBack _veh;
+        cbr_radars pushBackUnique _veh;
         publicVariable "cbr_radars";
 
         // знищена станція випадає з переліку діючих: посадку екіпажу
