@@ -3,7 +3,8 @@
 /*
     Function: cbr_fnc_addRadar
     Робить машину контрбатарейним радаром:
-        [_veh, [дальність, сектор, похибка, затримка]] call cbr_fnc_addRadar;
+        [_veh, [дальність, сектор, похибка, затримка, межа, пострілів]]
+            call cbr_fnc_addRadar;
 
     Реєстр веде КОЖНА машина: за ним машина стрільця вирішує, кому слати
     засічку, — тому список і налаштування станцій публічні.
@@ -20,7 +21,9 @@ _settings params [
     ["_range", CBR_RANGE, [0]],
     ["_sector", CBR_SECTOR, [0]],
     ["_error", CBR_ERROR, [0]],
-    ["_delay", CBR_DELAY, [0]]
+    ["_delay", CBR_DELAY, [0]],
+    ["_floor", CBR_ERROR_MIN, [0]],
+    ["_shots", CBR_ERROR_SHOTS, [0]]
 ];
 
 if (isServer) then {
@@ -31,6 +34,10 @@ if (isServer) then {
     _veh setVariable ["cbr_error", _error max 0, true];
     // менше за супровід затримці бути нема сенсу
     _veh setVariable ["cbr_delay", _delay max CBR_TRACK_MIN, true];
+
+    // нуль пострілів на звуження — це ділення на нуль у кривій
+    _veh setVariable ["cbr_floor", _floor max 0, true];
+    _veh setVariable ["cbr_shots", (round _shots) max 1, true];
 
     if (!(_veh getVariable ["cbr_initDone", false])) then {
         _veh setVariable ["cbr_initDone", true, true];

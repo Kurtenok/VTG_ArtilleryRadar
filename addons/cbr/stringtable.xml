@@ -17,9 +17,19 @@
             <Ukrainian>Похибка, частка дальності</Ukrainian>
         </Key>
         <Key ID="STR_cbr_arg_error_desc">
-            <English>How far the reported point can sit from the real gun, as a fraction of the distance to it: 0.04 means 800 m at 20 km. The radar computes back along a short arc, so an angular error grows with distance.</English>
-            <Russian>Насколько отметка может отстоять от настоящего орудия, долей от расстояния до него: 0.04 — это 800 м на 20 км. Радар считает назад по короткому участку дуги, поэтому угловая ошибка растёт с дальностью.</Russian>
-            <Ukrainian>Наскільки позначка може відстояти від справжньої гармати, часткою від відстані до неї: 0.04 — це 800 м на 20 км. Радар рахує назад по короткій ділянці дуги, тому кутова помилка росте з дальністю.</Ukrainian>
+            <English>Size of the FIRST circle, as a fraction of the distance to the gun: 0.04 means 800 m at 20 km. The radar computes back along a short arc, so the angular error grows with distance. The figure is for ideal conditions — a shell caught late, high above a ridge with its whole climb unseen, widens it further.</English>
+            <Russian>Размер ПЕРВОГО круга, долей от расстояния до орудия: 0.04 — это 800 м на 20 км. Радар считает назад по короткому участку дуги, поэтому угловая ошибка растёт с дальностью. Число дано для идеальных условий: снаряд, замеченный поздно — высоко, из-за хребта, со всем невидимым подъёмом, — расширяет круг ещё сильнее.</Russian>
+            <Ukrainian>Розмір ПЕРШОГО кола, часткою від відстані до гармати: 0.04 — це 800 м на 20 км. Радар рахує назад по короткій ділянці дуги, тому кутова помилка росте з відстанню. Число дане для ідеальних умов: снаряд, помічений пізно — високо, з-за хребта, з усім невидимим підйомом, — розширює коло ще більше.</Ukrainian>
+        </Key>
+        <Key ID="STR_cbr_arg_floor">
+            <English>Accuracy floor, m</English>
+            <Russian>Предел точности, м</Russian>
+            <Ukrainian>Межа точності, м</Ukrainian>
+        </Key>
+        <Key ID="STR_cbr_arg_floor_desc">
+            <English>Size of the LAST circle: how tight the uncertainty can get. Every shot from the same firing position is another measurement and the circle shrinks towards this, reaching it on the shot set below. The figure is for ideal conditions — a shell caught late behind a ridge lifts this floor along with the first circle.</English>
+            <Russian>Размер ПОСЛЕДНЕГО круга: до скольки может сжаться неопределённость. Каждый выстрел с той же огневой — ещё один замер, круг стягивается сюда и доходит на выстреле, заданном ниже. Число дано для идеальных условий: поздний захват из-за хребта поднимает этот предел вместе с первым кругом.</Russian>
+            <Ukrainian>Розмір ОСТАННЬОГО кола: до скількох може стиснутись невизначеність. Кожен постріл із тієї самої вогневої — ще один замір, коло стягується сюди й доходить на пострілі, заданому нижче. Число дане для ідеальних умов: пізнє захоплення з-за хребта піднімає цю межу разом із першим колом.</Ukrainian>
         </Key>
         <Key ID="STR_cbr_arg_range">
             <English>Detection range (m)</English>
@@ -40,6 +50,16 @@
             <English>Width of the sector the radar watches, counted from the vehicle's nose: turn the vehicle to aim the sector. 360 means all-round watch. Real sets use 90.</English>
             <Russian>Ширина сектора, который радар держит под наблюдением; отсчёт от носа машины, так что сектор наводится её разворотом. 360 — круговой обзор. У реальных станций 90.</Russian>
             <Ukrainian>Ширина сектора, який радар тримає під наглядом; відлік від носа машини, тож сектор наводиться її розворотом. 360 — круговий огляд. У реальних станцій 90.</Ukrainian>
+        </Key>
+        <Key ID="STR_cbr_arg_shots">
+            <English>Shots to reach the floor</English>
+            <Russian>Выстрелов до предела</Russian>
+            <Ukrainian>Пострілів до межі</Ukrainian>
+        </Key>
+        <Key ID="STR_cbr_arg_shots_desc">
+            <English>How many rounds from one firing position it takes to go from the first circle to the last. The circles in between are spread over this count, tightening fastest on the early shots; further rounds no longer improve it.</English>
+            <Russian>Сколько выстрелов с одной огневой нужно, чтобы дойти от первого круга до последнего. Круги между ними распределяются по этому числу, сужаясь быстрее всего на первых выстрелах; дальнейшие точность уже не улучшают.</Russian>
+            <Ukrainian>Скільки пострілів з однієї вогневої треба, щоб дійти від першого кола до останнього. Кола між ними розкладаються по цьому числу, звужуючись найшвидше на перших пострілах; дальші постріли точності вже не покращують.</Ukrainian>
         </Key>
         <Key ID="STR_cbr_cat">
             <English>Counter-battery radar</English>

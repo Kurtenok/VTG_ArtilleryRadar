@@ -69,9 +69,9 @@ private _mult = 1 + CBR_ERROR_LATE * _late;
 
 private _base = ((getPosASL _radar) distance _pos) * _sigma * _mult;
 
-// межа звуження ходить за класом станції: десять метрів це для
-// стандартної точності, вдвічі гірша впирається вдвічі далі
-private _floor = CBR_ERROR_MIN * (_sigma / CBR_ERROR) * _mult;
+// межа звуження — налаштування станції, але штраф за пізнє захоплення
+// піднімає й ЇЇ: обстріл з-за гори до неї не звузити
+private _floor = (_radar getVariable ["cbr_floor", CBR_ERROR_MIN]) * _mult;
 
 /*
     Дві черги, і поділ між ними принциповий. ПЕРША — кінець супроводу:

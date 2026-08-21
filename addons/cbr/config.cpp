@@ -60,6 +60,18 @@ class CfgVehicles {
                 typeName = "NUMBER";
                 defaultValue = CBR_DELAY;
             };
+            class Floor {
+                displayName = "$STR_cbr_arg_floor";
+                description = "$STR_cbr_arg_floor_desc";
+                typeName = "NUMBER";
+                defaultValue = CBR_ERROR_MIN;
+            };
+            class Shots {
+                displayName = "$STR_cbr_arg_shots";
+                description = "$STR_cbr_arg_shots_desc";
+                typeName = "NUMBER";
+                defaultValue = CBR_ERROR_SHOTS;
+            };
         };
     };
 };

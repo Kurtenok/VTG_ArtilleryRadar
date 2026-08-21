@@ -29,13 +29,14 @@ private _idx = _log findIf {
     && {abs ((_x select 3) - _speed) < CBR_SAME_SPEED * ((_x select 3) max _speed)}
 };
 
-// Коло звужується з кожним заміром, доходячи до межі на CBR_ERROR_SHOTS
-// пострілі. min _base — щоб точність не ПОГІРШУВАЛАСЬ від замірів на
-// ближній цілі, де базова похибка й так менша за межу
+// Коло звужується з кожним заміром, доходячи до межі на тому пострілі,
+// який заданий станції. min _base — щоб точність не ПОГІРШУВАЛАСЬ від
+// замірів на ближній цілі, де базова похибка й так менша за межу
 private _rounds = 1;
 if (_idx > -1) then { _rounds = ((_log select _idx) select 5) + 1 };
 
-private _t = ((_rounds - 1) / ((CBR_ERROR_SHOTS - 1) max 1)) min 1;
+private _shots = _radar getVariable ["cbr_shots", CBR_ERROR_SHOTS];
+private _t = ((_rounds - 1) / ((_shots - 1) max 1)) min 1;
 private _err = (_floor + (_base - _floor) * ((1 - _t) ^ 2)) min _base;
 
 /*

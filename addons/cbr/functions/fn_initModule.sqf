@@ -19,7 +19,9 @@ private _settings = [
     ["Range", CBR_RANGE] call _fnc_arg,
     ["Sector", CBR_SECTOR] call _fnc_arg,
     ["Error", CBR_ERROR] call _fnc_arg,
-    ["Delay", CBR_DELAY] call _fnc_arg
+    ["Delay", CBR_DELAY] call _fnc_arg,
+    ["Floor", CBR_ERROR_MIN] call _fnc_arg,
+    ["Shots", CBR_ERROR_SHOTS] call _fnc_arg
 ];
 
 private _targets = (synchronizedObjects _logic) select {
