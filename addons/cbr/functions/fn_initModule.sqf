@@ -1,10 +1,7 @@
 #include "defines.h"
 
-/*
-    Function: cbr_fnc_initModule
-    Модуль Едему (isGlobal = 2 — усі машини й JIP): чіпляє радар до
-    синхронізованої техніки.
-*/
+// Модуль Едему (isGlobal = 2 — усі машини й JIP): чіпляє радар до
+// синхронізованої техніки
 
 params ["_logic", "_units", "_activated"];
 

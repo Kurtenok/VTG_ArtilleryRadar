@@ -2,13 +2,9 @@
 
 /*
     Function: cbr_fnc_consoleDraw
-    Малювання поверх індикатора. Викликається рушієм щокадру, тож тут
+    Малювання поверх індикатора. Викликається рушієм ЩОКАДРУ, тож тут
     немає ані пошуків, ані звернень до мережі — лише геометрія за
     готовими числами.
-
-    Малюється те саме, що бачить оператор справжньої станції: межі
-    сектора, дуги дальності, розгортка й засічки. Дуга з відрізків —
-    інакше її нема чим накреслити на карті.
 */
 
 params ["_map"];
@@ -19,7 +15,6 @@ if (isNull _veh) exitWith {};
 private _pos = getPosATL _veh;
 private _bearing = _veh getVariable ["cbr_bearing", getDir _veh];
 private _sector = _veh getVariable ["cbr_sector", CBR_SECTOR];
-// зона, що малюється, і є зона сканування: одне число, без усереднень
 private _far = _veh getVariable ["cbr_range", CBR_RANGE];
 
 private _half = _sector / 2;
@@ -31,14 +26,9 @@ private _fnc_at = {
 private _from = _bearing - _half;
 private _to = _bearing + _half;
 
-/*
-    Сітка сектора — дуги дальності, їх підписи й межі — від кадру не
-    залежить: вона змінюється лише коли оператор довернув сектор або
-    станція переїхала. Тому рахується один раз і лежить готовою.
-
-    Раніше це були три сотні синусів щокадру: вісім дуг по два десятки
-    точок, і все наново на кожному малюванні.
-*/
+// Сітка сектора від кадру не залежить — лише від довороту й позиції
+// станції, тож рахується раз і лежить готовою. Інакше це три сотні
+// синусів щокадру
 private _key = [round (_pos select 0), round (_pos select 1), round _bearing, _sector, _far];
 private _grid = uiNamespace getVariable ["cbr_grid", []];
 
@@ -59,7 +49,7 @@ if ((_grid param [0, []]) isNotEqualTo _key) then {
         };
         _lines pushBack [_prev, [_to, _d] call _fnc_at, _col];
 
-        // підпис по осі сектора; півкілометри пишемо з десятою
+        // підпис по осі сектора; півкілометри з десятою
         private _km = _d / 1000;
         _texts pushBack [
             CBR_ICO_NONE, CBR_COL_DIM,
@@ -88,8 +78,8 @@ if ((_grid param [0, []]) isNotEqualTo _key) then {
 { _map drawLine _x } forEach (_grid select 1);
 { _map drawIcon _x } forEach (_grid select 2);
 
-// Розгортка навмисно повільніша за справжню — на екрані вона має
-// читатися оком. Синус дає сповільнення біля країв, як у приводу
+// повільніша за справжню, щоб читалась оком; синус дає сповільнення
+// біля країв, як у приводу
 private _phase = sin (360 * (CBA_missionTime / CBR_SWEEP_PERIOD));
 private _sw = _bearing + _half * _phase;
 _map drawLine [_pos, [_sw, _far] call _fnc_at, CBR_COL_MAIN];
@@ -114,16 +104,13 @@ private _now = time;
     private _age = _now - _at;
     private _col = [CBR_COL_FIX, CBR_COL_SEL] select (_forEachIndex == _sel);
 
-    // Радіус кола і є похибка, а засічка зміщена всередині нього
-    // випадково: знаряддя стоїть ДЕСЬ у колі, а не в центрі
+    // радіус кола і є похибка: знаряддя стоїть ДЕСЬ у ньому
     if (_err > 0) then {
         _map drawEllipse [_p, _err, _err, 0, _col, ""];
     };
 
-    /*
-        Куди било знаряддя: короткий вектор від засічки за азимутом
-        стрільби. Каже, КОГО накривають, — з самої позиції цього не видно
-    */
+    // куди било знаряддя: каже, КОГО накривають, чого з самої позиції
+    // не видно
     private _len = (_err * 1.5) max 300;
     _map drawLine [
         _p,
@@ -131,15 +118,11 @@ private _now = time;
         _col
     ];
 
-    // підпис зібрано в оновленні журналу: він міняється подіями, а не
-    // щокадру, і складати його по два десятки разів на кадр нема сенсу
+    // підпис зібрано в оновленні журналу: він міняється подіями
     private _label = _labels param [_forEachIndex, ""];
 
-    /*
-        Імпульс появи. Фаза береться від віку засічки, а не від
-        загального часу, тож кожна нова починає власний відлік і не
-        пульсує в такт із сусідніми.
-    */
+    // Імпульс появи. Фаза від ВІКУ засічки, а не від загального часу:
+    // інакше нові пульсували б у такт із сусідніми
     if (_age < CBR_PING_FOR && {_err > 0}) then {
         private _t = (_age mod CBR_PING_PERIOD) / CBR_PING_PERIOD;
 
@@ -151,9 +134,8 @@ private _now = time;
         ];
     };
 
-    // Значка у вогневої немає навмисно: її межі й так окреслює коло
-    // невизначеності, а позначка поверх нього вдавала б точку, якої
-    // станція не знає. Нульовий розмір лишає від виклику самий підпис
+    // Значка немає навмисно: межі окреслює коло невизначеності, а
+    // позначка вдавала б точку, якої станція не знає
     _map drawIcon [
         CBR_ICO_NONE, _col,
         _p, 0, 0, 0,
@@ -161,19 +143,10 @@ private _now = time;
     ];
 } forEach (uiNamespace getVariable ["cbr_log", []]);
 
-/*
-    Снаряди в польоті — крапкою. Дуга прорахована ще при захопленні, тож
-    кадр коштує підстановки часу.
-
-    Видно чи ні — вирішує cbr_fnc_consoleLos у реальному часі: і сектор,
-    і дальність, і рельєф, і будівлі. Тут лише прапорець, бо малювання
-    має лишатись малюванням.
-
-    Поки черга до снаряда не дійшла, він НЕ малюється: правду знає лише
-    перевірка, і показати наперед означало б блимнути тим, чого станція
-    не бачить.
-*/
-// рядки формату кладе пульт при відкритті: localize щокадру ні до чого
+// Снаряди в польоті. Видно чи ні — вирішує cbr_fnc_consoleLos; поки
+// черга до снаряда не дійшла, він НЕ малюється: показати наперед
+// означало б блимнути тим, чого станція не бачить.
+// Рядки формату кладе пульт при відкритті: localize щокадру ні до чого
 (uiNamespace getVariable ["cbr_fmt", ["%1 %2 %3", "%1 %2"]]) params ["_fmtCal", "_fmtNo"];
 private _losMap = uiNamespace getVariable ["cbr_los", createHashMap];
 
@@ -186,7 +159,7 @@ private _losMap = uiNamespace getVariable ["cbr_los", createHashMap];
     private _t = _now - _t0;
     if (_last < 1 || {_t < 0} || {_t > _last * CBR_ARC_DT}) then { continue };
 
-    // положення за часом: відліки дуги рівні, тож досить підстановки
+    // відліки дуги рівні за часом, тож досить підстановки
     private _u = (_t / CBR_ARC_DT) min _last;
     private _i = floor _u;
     private _at = _arc select _i;
@@ -194,15 +167,13 @@ private _losMap = uiNamespace getVariable ["cbr_los", createHashMap];
         _at = _at vectorAdd (((_arc select (_i + 1)) vectorDiff _at) vectorMultiply (_u - _i));
     };
 
-    // швидкість дають самі відліки дуги: вони рівні за часом
     private _v = round (((_arc select ((_i + 1) min _last)) distance (_arc select _i)) / CBR_ARC_DT);
     private _h = round (_at select 2);
 
     _map drawIcon [
         CBR_ICO_SHELL, CBR_COL_MAIN,
         _at, CBR_SHELL_SIZE, CBR_SHELL_SIZE, 0,
-        // саме if, а не select: той склав би ОБИДВА рядки, щоб одразу
-        // викинути один, і так на кожен снаряд кожного кадру
+        // саме if, а не select: той склав би ОБИДВА рядки щокадру
         if (_cal > 0) then { format [_fmtCal, _cal, _v, _h] } else { format [_fmtNo, _v, _h] },
         0, CBR_TEXT_SIZE, "RobotoCondensed"
     ];

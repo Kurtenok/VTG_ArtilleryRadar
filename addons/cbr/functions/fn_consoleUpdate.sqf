@@ -1,10 +1,7 @@
 #include "defines.h"
 
-/*
-    Function: cbr_fnc_consoleUpdate
-    Журнал і рядок стану. Раз на чверть секунди, бо цифри тут міняються
-    подіями, а не щокадру; рух розгортки веде обробник малювання.
-*/
+// Журнал і рядок стану. Раз на чверть секунди, бо цифри тут міняються
+// подіями; рух розгортки веде обробник малювання
 
 private _veh = uiNamespace getVariable ["cbr_veh", objNull];
 if (isNull _veh) exitWith {};
@@ -12,15 +9,9 @@ if (isNull _veh) exitWith {};
 private _raw = _veh getVariable ["cbr_acq", []];
 private _log = uiNamespace getVariable ["cbr_log", []];
 
-/*
-    Журнал міняється подіями — постріл раз на кілька секунд, — а тік
-    іде чотири рази на секунду. Тому сортування й складання підписів
-    робляться лише коли він справді змінився або коли з нього щось
-    протухло за віком.
-
-    Порівнюється КОПІЯ: запис оновлюється на місці, і посилання
-    зрівнялося б саме із собою, скільки б не мінялось.
-*/
+// Сортування й підписи — лише коли журнал справді змінився. Порівнюється
+// КОПІЯ: запис оновлюється на місці, і посилання зрівнялося б саме із
+// собою, скільки б не мінялось
 if (
     _raw isNotEqualTo (uiNamespace getVariable ["cbr_raw", []])
     || {_log findIf { (time - (_x select 4)) >= CBR_ACQ_LIFE } > -1}
@@ -32,11 +23,7 @@ if (
     _log = [_log, [], { -(_x select 4) }, "ASCEND"] call BIS_fnc_sortBy;
     uiNamespace setVariable ["cbr_log", _log];
 
-    /*
-        Підписи для індикатора збираються тут — вони міняються подіями,
-        а малювання йде щокадру. Складати два десятки рядків по
-        шістдесят разів на секунду нема сенсу.
-    */
+    // підписи для індикатора збираються тут: малювання йде щокадру
     private _fmtCal = localize "STR_cbr_label";
     private _fmtNo = localize "STR_cbr_label_nocal";
 
@@ -58,8 +45,8 @@ uiNamespace setVariable ["cbr_sel", _sel];
 private _bearing = _veh getVariable ["cbr_bearing", getDir _veh];
 private _sector = _veh getVariable ["cbr_sector", CBR_SECTOR];
 
-// parseText і перемальовування коштують помітно дорожче за порівняння
-// рядків, а стан на пульті стоїть без змін більшість тіків
+// parseText коштує помітно дорожче за порівняння рядків, а стан на
+// пульті стоїть без змін більшість тіків
 private _fnc_set = {
     params ["_ctrl", "_text"];
     if ((_ctrl getVariable ["cbr_last", ""]) isEqualTo _text) exitWith {};

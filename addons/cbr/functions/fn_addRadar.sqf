@@ -5,8 +5,8 @@
     Робить машину контрбатарейним радаром:
         [_veh, [дальність, сектор, похибка, затримка]] call cbr_fnc_addRadar;
 
-    Реєстр веде КОЖНА машина: за ним машина стрільця вирішує, кому саме
-    надсилати засічку, — тому список і налаштування станцій публічні.
+    Реєстр веде КОЖНА машина: за ним машина стрільця вирішує, кому слати
+    засічку, — тому список і налаштування станцій публічні.
 */
 
 params [
@@ -29,23 +29,20 @@ if (isServer) then {
     _veh setVariable ["cbr_range", _range, true];
     _veh setVariable ["cbr_sector", 0 max _sector min 360, true];
     _veh setVariable ["cbr_error", _error max 0, true];
-    // менше за супровід затримці бути нема сенсу: рахувати назад
-    // станція починає лише після нього
+    // менше за супровід затримці бути нема сенсу
     _veh setVariable ["cbr_delay", _delay max CBR_TRACK_MIN, true];
 
     if (!(_veh getVariable ["cbr_initDone", false])) then {
         _veh setVariable ["cbr_initDone", true, true];
 
-        // початковий напрямок сектора — куди дивиться машина; далі його
-        // веде оператор із пульта
+        // початковий напрямок — куди дивиться машина; далі веде оператор
         _veh setVariable ["cbr_bearing", getDir _veh, true];
 
         if (isNil "cbr_radars") then { cbr_radars = [] };
         cbr_radars pushBackUnique _veh;
         publicVariable "cbr_radars";
 
-        // знищена станція випадає з переліку діючих: посадку екіпажу
-        // стежить клієнт, а от загибель машини — лише сервер
+        // посадку екіпажу стежить клієнт, а загибель машини — лише сервер
         _veh addEventHandler ["Killed", { [] call cbr_fnc_manned }];
     };
 
