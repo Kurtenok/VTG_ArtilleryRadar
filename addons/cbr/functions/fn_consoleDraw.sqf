@@ -95,14 +95,19 @@ private _sel = uiNamespace getVariable ["cbr_sel", 0];
 private _labels = uiNamespace getVariable ["cbr_labels", []];
 private _now = time;
 
+// кольори підняті з циклу: select склав би ОБИДВА масиви на кожну
+// засічку кожного кадру, щоб одразу викинути один
+private _colFix = CBR_COL_FIX;
+private _colSel = CBR_COL_SEL;
+
 {
-    _x params [
-        "_id", "_p", "_cal", "_speed", "_at", "_rounds",
-        ["_err", 0], ["_fireAz", 0], ["_when", 0]
-    ];
+    // решту полів запису несе готовий підпис, розпаковувати їх щокадру
+    // нема навіщо
+    _x params ["", "_p", "", "", "_at", "", ["_err", 0], ["_fireAz", 0]];
 
     private _age = _now - _at;
-    private _col = [CBR_COL_FIX, CBR_COL_SEL] select (_forEachIndex == _sel);
+    private _col = _colFix;
+    if (_forEachIndex == _sel) then { _col = _colSel };
 
     // радіус кола і є похибка: знаряддя стоїть ДЕСЬ у ньому
     if (_err > 0) then {
@@ -153,7 +158,10 @@ private _losMap = uiNamespace getVariable ["cbr_los", createHashMap];
 {
     _x params ["_t0", "_arc", "_cal", "_id"];
 
-    if !((_losMap getOrDefault [_id, [false]]) select 0) then { continue };
+    // get, а не getOrDefault: той склав би масив-заглушку на кожен
+    // снаряд кожного кадру, навіть коли запис на місці
+    private _vis = _losMap get _id;
+    if (isNil "_vis" || {!(_vis select 0)}) then { continue };
 
     private _last = (count _arc) - 1;
     private _t = _now - _t0;

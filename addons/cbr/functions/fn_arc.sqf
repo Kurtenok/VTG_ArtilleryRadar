@@ -17,10 +17,10 @@
 
 params ["_pos", "_vel", "_ammo"];
 
-private _cache = missionNamespace getVariable "cbr_ballistics";
+private _cache = missionNamespace getVariable "cbr_ammoDrag";
 if (isNil "_cache") then {
     _cache = createHashMap;
-    missionNamespace setVariable ["cbr_ballistics", _cache];
+    missionNamespace setVariable ["cbr_ammoDrag", _cache];
 };
 
 private _data = _cache get _ammo;

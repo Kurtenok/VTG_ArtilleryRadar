@@ -142,8 +142,8 @@ class CfgFunctions {
             class detect {};
             class drop {};
             class erase {};
-            class initModule {};
             class hhmm {};
+            class initModule {};
             class manned {};
             class mark {};
             class record {};

@@ -5,7 +5,7 @@
 
 if (isNil "cbr_radars") then { cbr_radars = [] };
 if (isNil "cbr_active") then { cbr_active = [] };
-if (isNil "cbr_ballistic") then { cbr_ballistic = createHashMap };
+if (isNil "cbr_ammoKind") then { cbr_ammoKind = createHashMap };
 
 // наступним кадром: модулі Едему мають відпрацювати першими
 [{ [] call cbr_fnc_stock }] call CBA_fnc_execNextFrame;
@@ -37,7 +37,7 @@ addMissionEventHandler ["ProjectileCreated", {
     // балістичність — властивість КЛАСУ, а isKindOf ходить по дереву
     // спадкування; куль за бій летять тисячі
     private _type = typeOf _proj;
-    private _info = cbr_ballistic get _type;
+    private _info = cbr_ammoKind get _type;
     if (isNil "_info") then {
         // кероване не рахується: ПТУР і ЗУР летять своїм двигуном
         private _rocket = _proj isKindOf "RocketCore" && {!(_proj isKindOf "MissileCore")};
@@ -50,22 +50,14 @@ addMissionEventHandler ["ProjectileCreated", {
             _burn = getNumber (_cfg >> "initTime") + getNumber (_cfg >> "thrustTime");
         };
 
-        /*
-            Реактивна артилерія — це SubmunitionCore, а не снаряд і не
-            ракета. Град, MLRS і ATACMS усі ростуть від ванільного
-            R_230mm_HE: він сам летить усю дугу, а за triggerDistance до
-            цілі стає бойовою частиною R_230mm_fly. Отже саме носій і є
-            та дуга, яку веде станція, — без нього реактивний вогонь для
-            радара не існував узагалі.
-
-            Бойова частина другим слідом не піде: вона з'являється вже
-            за півкілометра до цілі, на падінні, і її відсіває кут
-            кидання. Так само відсіваються й касетні уламки.
-        */
+        // Реактивна артилерія — це SubmunitionCore, а не снаряд і не
+        // ракета: Град, MLRS і ATACMS ростуть від R_230mm_HE, який сам
+        // летить усю дугу, а за triggerDistance до цілі стає бойовою
+        // частиною. Та другим слідом не піде — з'являється на падінні
         private _sub = _proj isKindOf "SubmunitionCore";
 
         _info = [_rocket || {_proj isKindOf "ShellCore"} || _sub, _burn, _sub];
-        cbr_ballistic set [_type, _info];
+        cbr_ammoKind set [_type, _info];
     };
     _info params ["_ballistic", "_burn", "_sub"];
     if (!_ballistic) exitWith {};
@@ -74,18 +66,11 @@ addMissionEventHandler ["ProjectileCreated", {
     private _speed = vectorMagnitude _vel;
     if (_speed < CBR_MIN_SPEED) exitWith {};
 
-    /*
-        Настильна над променем не піднімається; відсів до мережі, бо
-        більшість пострілів у бою саме настильні.
-
-        Реактивну артилерію кут кидання НЕ судить. В Армі R_230mm_HE
-        летить без опору повітря, тож 690 м/с несуть його на 48 км, а
-        установка вище 65 градусів не піднімається — і обчислювач на
-        будь-яку робочу дальність бере пологе рішення: 6 градусів на
-        10 км там, де справжній Град кидає під 30-50. Кут тут артефакт
-        конфіга, а не форма траєкторії, тож вирішує вже cbr_fnc_track
-        по самій дузі.
-    */
+    // Настильна над променем не піднімається; відсів до мережі, бо
+    // більшість пострілів у бою саме настильні. Реактивну артилерію кут
+    // НЕ судить: без опору повітря 690 м/с несуть Град на 48 км, і
+    // обчислювач б'є з 6 градусів там, де справжній кидає під 30-50 —
+    // це артефакт конфіга, а не форма дуги. Вирішить cbr_fnc_track
     private _elev = asin (((_vel select 2) / _speed) max -1 min 1);
     if (_elev < CBR_MIN_ELEV && {!_sub}) exitWith {};
 

@@ -32,7 +32,7 @@ private _logW = 720 * CBR_PXU;
 private _barH = 62 * CBR_LU;
 
 private _fnc_text = {
-    params ["_display", "_pos", "_size", "_color", ["_align", "left"], ["_class", "RscStructuredText"]];
+    params ["_display", "_pos", "_size", "_color", ["_class", "RscStructuredText"]];
     private _c = _display ctrlCreate [_class, -1];
     _c ctrlSetPosition _pos;
     _c ctrlSetFontHeight _size;

@@ -53,10 +53,11 @@ while { !_done && {_k < _n} } do {
     private _t = _now - _t0;
 
     // ще не вилетів, уже впав, або черга до нього ще не настала
+    private _was = _los get _id;
     private _due = _last > 0
         && {_t >= 0}
         && {_t <= _last * CBR_ARC_DT}
-        && {_now - ((_los getOrDefault [_id, [false, -1e10]]) select 1) >= CBR_LOS_EVERY};
+        && {isNil "_was" || {_now - (_was select 1) >= CBR_LOS_EVERY}};
 
     if (_due) then {
         // відліки дуги рівні за часом, тож досить підстановки
